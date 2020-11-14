@@ -5,6 +5,8 @@ import eutros.coverseverywhere.api.AbstractCoverType;
 import eutros.coverseverywhere.api.CoverItem;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverType;
+import eutros.coverseverywhere.common.util.RenderHelper;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -18,9 +20,6 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
 public class ConveyorCover implements ICover {
 
     public static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "conveyor");
@@ -29,14 +28,13 @@ public class ConveyorCover implements ICover {
 
     private EnumFacing side;
 
-    public ConveyorCover(@Nonnull EnumFacing side) {
+    public ConveyorCover(EnumFacing side) {
         this.side = side;
     }
 
     ConveyorCover() {
     }
 
-    @Nonnull
     @Override
     public ICoverType getType() {
         return TYPE;
@@ -55,7 +53,7 @@ public class ConveyorCover implements ICover {
     }
 
     @Override
-    public void tick(@Nonnull TileEntity tile) {
+    public void tick(TileEntity tile) {
         TileEntity otherTile = tile.getWorld().getTileEntity(tile.getPos().offset(side));
         if(otherTile == null ||
                 !tile.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side) ||
@@ -79,14 +77,18 @@ public class ConveyorCover implements ICover {
         if(extractedCount > 0) tileCap.extractItem(slot, extractedCount, false);
     }
 
+    @Override
+    public void render(BufferBuilder buff, BlockPos pos) {
+        RenderHelper.side(buff, RenderHelper.COVER_SPRITE, pos, side);
+    }
+
     public static class Item extends CoverItem {
 
         private Item() {
             setRegistryName(NAME);
+            setUnlocalizedName(NAME.getResourceDomain() + "." + NAME.getResourcePath());
         }
 
-        @Nonnull
-        @ParametersAreNonnullByDefault
         @Override
         protected ICover makeCover(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing) {
             return new ConveyorCover(facing);
@@ -100,9 +102,8 @@ public class ConveyorCover implements ICover {
             super(NAME);
         }
 
-        @Nonnull
         @Override
-        public ConveyorCover makeCover(@Nonnull NBTTagCompound nbt) {
+        public ConveyorCover makeCover(NBTTagCompound nbt) {
             ConveyorCover cover = new ConveyorCover();
             cover.deserializeNBT(nbt);
             return cover;

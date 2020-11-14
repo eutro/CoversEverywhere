@@ -11,7 +11,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 
-public abstract class CoverItem extends Item {
+public abstract class CoverItem extends Item implements ICoverRevealer {
 
     @CapabilityInject(ICoverHolder.class)
     public static Capability<ICoverHolder> CAPABILITY = null;
