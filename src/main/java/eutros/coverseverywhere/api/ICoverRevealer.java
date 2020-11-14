@@ -6,4 +6,8 @@ public interface ICoverRevealer {
         return true;
     }
 
+    default boolean showGrid() {
+        return true;
+    }
+
 }

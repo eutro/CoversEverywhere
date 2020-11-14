@@ -18,7 +18,7 @@ public class Textures {
     @SubscribeEvent
     public static void stitchTextures(TextureStitchEvent.Pre evt) {
         TextureMap map = evt.getMap();
-        Textures.COVER_SPRITE = map.registerSprite(transform(ConveyorCover.NAME));
+        COVER_SPRITE = map.registerSprite(transform(ConveyorCover.NAME));
     }
 
     private static ResourceLocation transform(ResourceLocation loc) {

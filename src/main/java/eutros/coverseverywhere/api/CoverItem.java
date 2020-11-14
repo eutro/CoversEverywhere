@@ -26,10 +26,11 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
         ICoverHolder cap = tile.getCapability(CAPABILITY, null);
         if(cap == null) return EnumActionResult.PASS;
 
-        ICover cover = makeCover(player, worldIn, pos, hand, facing);
+        EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
+        ICover cover = makeCover(player, worldIn, pos, hand, side);
         if(cover == null) return EnumActionResult.PASS;
 
-        cap.put(facing, cover);
+        cap.put(side, cover);
         if(!player.isCreative()) player.getHeldItem(hand).shrink(1);
         return EnumActionResult.SUCCESS;
     }
