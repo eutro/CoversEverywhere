@@ -1,40 +1,11 @@
-package eutros.coverseverywhere.common.util;
+package eutros.coverseverywhere.client.util;
 
-import eutros.coverseverywhere.CoversEverywhere;
-import eutros.coverseverywhere.common.covers.ConveyorCover;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3i;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.event.TextureStitchEvent;
-import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
 
-@Mod.EventBusSubscriber(modid = CoversEverywhere.MOD_ID, value = Side.CLIENT)
 public class RenderHelper {
-
-    public static TextureAtlasSprite COVER_SPRITE;
-
-    @SubscribeEvent
-    public static void stitchTextures(TextureStitchEvent.Pre evt) {
-        TextureMap map = evt.getMap();
-        COVER_SPRITE = map.registerSprite(transform(ConveyorCover.NAME));
-    }
-
-    @SubscribeEvent
-    public static void registerModels(ModelRegistryEvent evt) {
-        ModelLoader.setCustomModelResourceLocation(ConveyorCover.ITEM, 0, new ModelResourceLocation(ConveyorCover.NAME, "inventory"));
-    }
-
-    private static ResourceLocation transform(ResourceLocation loc) {
-        return new ResourceLocation(loc.getResourceDomain(), "covers/" + loc.getResourcePath());
-    }
 
     public static void side(BufferBuilder buff, TextureAtlasSprite sprite, Vec3i pos, EnumFacing side) {
         float

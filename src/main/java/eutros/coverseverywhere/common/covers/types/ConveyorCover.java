@@ -1,11 +1,12 @@
-package eutros.coverseverywhere.common.covers;
+package eutros.coverseverywhere.common.covers.types;
 
 import eutros.coverseverywhere.CoversEverywhere;
 import eutros.coverseverywhere.api.AbstractCoverType;
 import eutros.coverseverywhere.api.CoverItem;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverType;
-import eutros.coverseverywhere.common.util.RenderHelper;
+import eutros.coverseverywhere.client.Textures;
+import eutros.coverseverywhere.client.util.RenderHelper;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -89,7 +90,7 @@ public class ConveyorCover implements ICover {
     @SideOnly(Side.CLIENT)
     @Override
     public void render(BufferBuilder buff) {
-        RenderHelper.side(buff, RenderHelper.COVER_SPRITE, tile.getPos(), side);
+        RenderHelper.side(buff, Textures.COVER_SPRITE, tile.getPos(), side);
     }
 
     @Override

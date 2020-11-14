@@ -11,12 +11,13 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -61,9 +62,6 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         CapabilityManager.INSTANCE.register(ICoverHolder.class,
                 new NbtSerializableStorage<>(),
                 CoversCapabilityProvider::new);
-        CapabilityManager.INSTANCE.register(ICover.class,
-                new NbtSerializableStorage<>(),
-                () -> null);
     }
 
     @SubscribeEvent
@@ -134,7 +132,9 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         if(covers.values().isEmpty()) return;
         Minecraft mc = Minecraft.getMinecraft();
         if(mc.player == null) return;
-        if(!(mc.player.getHeldItemMainhand().getItem() instanceof ICoverRevealer)) return;
+
+        Item item = mc.player.getHeldItemMainhand().getItem();
+        if(!(item instanceof ICoverRevealer) || !((ICoverRevealer) item).showCovers()) return;
 
         mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
@@ -164,9 +164,9 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
     private void onDestroy() {
         MinecraftForge.EVENT_BUS.unregister(this);
-        for(Map<ICoverType, ICover> map : covers.values()) {
-            for(ICover cover : map.values()) {
-                dropItems(cover);
+        for(Map.Entry<EnumFacing, Map<ICoverType, ICover>> entry : covers.entrySet()) {
+            for(ICover cover : entry.getValue().values()) {
+                dropItems(entry.getKey(), cover);
             }
         }
         covers.clear();
@@ -180,19 +180,43 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
         ICoverType type = cover.getType();
         if(map.containsKey(type)) {
-            dropItems(map.get(type));
+            dropItems(side, map.get(type));
             map.remove(type);
         }
         map.put(type, cover);
     }
 
-    private void dropItems(ICover cover) {
-        BlockPos pos = tile.getPos();
-        World world = tile.getWorld();
-        if(world.isRemote) return;
+    @Nullable
+    @Override
+    public ICover get(EnumFacing side, ICoverType type) {
+        return covers.containsKey(side) ? covers.get(side).get(type) : null;
+    }
 
+    @Nullable
+    @Override
+    public ICover remove(EnumFacing side, ICoverType type, boolean drop) {
+        ICover cover = covers.containsKey(side) ? covers.get(side).remove(type) : null;
+        if(cover != null) dropItems(side, cover);
+        return cover;
+    }
+
+    private void dropItems(EnumFacing side, ICover cover) {
+        Vec3d pos = new Vec3d(tile.getPos())
+                .addVector(0.5, 0.5, 0.5)
+                .addVector(
+                        side.getFrontOffsetX() * 0.5,
+                        side.getFrontOffsetY() * 0.5,
+                        side.getFrontOffsetZ() * 0.5
+                );
+        World world = tile.getWorld();
+
+        if(world.isRemote) return;
         for(ItemStack stack : cover.getDrops()) {
-            world.spawnEntity(new EntityItem(world, pos.getX(), pos.getY(), pos.getZ(), stack));
+            world.spawnEntity(new EntityItem(world,
+                    pos.x + world.rand.nextGaussian() * 0.1,
+                    pos.y + world.rand.nextGaussian() * 0.1,
+                    pos.z + world.rand.nextGaussian() * 0.1,
+                    stack));
         }
     }
 
