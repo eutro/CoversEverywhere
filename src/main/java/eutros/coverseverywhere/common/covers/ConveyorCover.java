@@ -16,9 +16,15 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class ConveyorCover implements ICover {
 
@@ -26,13 +32,16 @@ public class ConveyorCover implements ICover {
     public static Type TYPE = new Type();
     public static Item ITEM = new Item();
 
+    private final TileEntity tile;
     private EnumFacing side;
 
-    public ConveyorCover(EnumFacing side) {
+    public ConveyorCover(TileEntity tile, EnumFacing side) {
         this.side = side;
+        this.tile = tile;
     }
 
-    ConveyorCover() {
+    ConveyorCover(TileEntity tile) {
+        this.tile = tile;
     }
 
     @Override
@@ -53,7 +62,7 @@ public class ConveyorCover implements ICover {
     }
 
     @Override
-    public void tick(TileEntity tile) {
+    public void tick() {
         TileEntity otherTile = tile.getWorld().getTileEntity(tile.getPos().offset(side));
         if(otherTile == null ||
                 !tile.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side) ||
@@ -77,9 +86,15 @@ public class ConveyorCover implements ICover {
         if(extractedCount > 0) tileCap.extractItem(slot, extractedCount, false);
     }
 
+    @SideOnly(Side.CLIENT)
     @Override
-    public void render(BufferBuilder buff, BlockPos pos) {
-        RenderHelper.side(buff, RenderHelper.COVER_SPRITE, pos, side);
+    public void render(BufferBuilder buff) {
+        RenderHelper.side(buff, RenderHelper.COVER_SPRITE, tile.getPos(), side);
+    }
+
+    @Override
+    public List<ItemStack> getDrops() {
+        return Collections.singletonList(new ItemStack(ITEM));
     }
 
     public static class Item extends CoverItem {
@@ -91,7 +106,7 @@ public class ConveyorCover implements ICover {
 
         @Override
         protected ICover makeCover(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing) {
-            return new ConveyorCover(facing);
+            return new ConveyorCover(Objects.requireNonNull(worldIn.getTileEntity(pos)), facing);
         }
 
     }
@@ -103,8 +118,8 @@ public class ConveyorCover implements ICover {
         }
 
         @Override
-        public ConveyorCover makeCover(NBTTagCompound nbt) {
-            ConveyorCover cover = new ConveyorCover();
+        public ConveyorCover makeCover(TileEntity tile, NBTTagCompound nbt) {
+            ConveyorCover cover = new ConveyorCover(tile);
             cover.deserializeNBT(nbt);
             return cover;
         }

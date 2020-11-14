@@ -1,10 +1,11 @@
 package eutros.coverseverywhere.api;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 public interface ICoverType extends IForgeRegistryEntry<ICoverType> {
 
-    ICover makeCover(NBTTagCompound nbt);
+    ICover makeCover(TileEntity tile, NBTTagCompound nbt);
 
 }
