@@ -1,6 +1,5 @@
 package eutros.coverseverywhere.api;
 
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.INBTSerializable;
@@ -17,7 +16,7 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
     }
 
     @SideOnly(Side.CLIENT)
-    void render(BufferBuilder buff);
+    void render();
 
     List<ItemStack> getDrops();
 

@@ -8,6 +8,8 @@ import eutros.coverseverywhere.api.ICoverType;
 import eutros.coverseverywhere.client.Textures;
 import eutros.coverseverywhere.client.util.RenderHelper;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -22,6 +24,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import org.lwjgl.opengl.GL11;
 
 import java.util.Collections;
 import java.util.List;
@@ -89,8 +92,12 @@ public class ConveyorCover implements ICover {
 
     @SideOnly(Side.CLIENT)
     @Override
-    public void render(BufferBuilder buff) {
+    public void render() {
+        Tessellator tes = Tessellator.getInstance();
+        BufferBuilder buff = tes.getBuffer();
+        buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         RenderHelper.side(buff, Textures.COVER_SPRITE, tile.getPos(), side);
+        tes.draw();
     }
 
     @Override
