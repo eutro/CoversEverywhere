@@ -1,6 +1,7 @@
 package eutros.coverseverywhere.api;
 
 import com.google.common.base.Suppliers;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.function.Supplier;
@@ -16,10 +17,14 @@ public interface CoversEverywhereAPI {
         }
     });
 
-    static CoversEverywhereAPI getInstance() {
+    static CoversEverywhereAPI getApi() {
         return INSTANCE.get();
     }
 
     IForgeRegistry<ICoverType> getRegistry();
+
+    Capability<ICoverHolder> getHolderCapability();
+
+    Capability<ICoverRevealer> getRevealerCapability();
 
 }

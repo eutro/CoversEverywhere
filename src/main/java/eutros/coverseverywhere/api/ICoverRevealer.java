@@ -2,11 +2,11 @@ package eutros.coverseverywhere.api;
 
 public interface ICoverRevealer {
 
-    default boolean showCovers() {
+    default boolean shouldShowCover(ICover cover) {
         return true;
     }
 
-    default boolean showGrid() {
+    default boolean shouldShowGrid() {
         return true;
     }
 

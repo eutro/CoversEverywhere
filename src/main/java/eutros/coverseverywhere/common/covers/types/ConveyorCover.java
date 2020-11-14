@@ -117,6 +117,11 @@ public class ConveyorCover implements ICover {
             return new ConveyorCover(Objects.requireNonNull(worldIn.getTileEntity(pos)), facing);
         }
 
+        @Override
+        public boolean shouldShowCover(ICover cover) {
+            return cover.getType() == TYPE;
+        }
+
     }
 
     public static class Type extends AbstractCoverType<ConveyorCover> {

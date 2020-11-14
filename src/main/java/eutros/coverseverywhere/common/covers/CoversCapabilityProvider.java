@@ -4,23 +4,23 @@ import com.google.common.base.Preconditions;
 import eutros.coverseverywhere.CoversEverywhere;
 import eutros.coverseverywhere.api.*;
 import eutros.coverseverywhere.common.util.NbtSerializableStorage;
+import eutros.coverseverywhere.common.util.NoOpStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -34,11 +34,9 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHolder {
+import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
-    // soft dependencies shouldn't use this, they can @CapabilityInject themselves.
-    @CapabilityInject(ICoverHolder.class)
-    public static Capability<ICoverHolder> COVER_HOLDER_CAPABILITY = null;
+public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHolder {
 
     private static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "covers");
 
@@ -60,6 +58,10 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         CapabilityManager.INSTANCE.register(ICoverHolder.class,
                 new NbtSerializableStorage<>(),
                 CoversCapabilityProvider::new);
+        CapabilityManager.INSTANCE.register(ICoverRevealer.class,
+                new NoOpStorage<>(),
+                () -> new ICoverRevealer() {
+                });
     }
 
     @SubscribeEvent
@@ -69,13 +71,13 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
     @Override
     public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-        return capability == COVER_HOLDER_CAPABILITY;
+        return capability == getApi().getHolderCapability();
     }
 
     @Nullable
     @Override
     public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-        return capability == COVER_HOLDER_CAPABILITY ? COVER_HOLDER_CAPABILITY.cast(this) :
+        return capability == getApi().getHolderCapability() ? getApi().getHolderCapability().cast(this) :
                null;
     }
 
@@ -107,7 +109,7 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
             covers.put(EnumFacing.byName(key), side);
             NBTTagCompound sideNbt = nbt.getCompoundTag(key);
             for(String id : sideNbt.getKeySet()) {
-                ICoverType type = CoversEverywhereAPI.getInstance()
+                ICoverType type = getApi()
                         .getRegistry()
                         .getValue(new ResourceLocation(sideNbt.getString(id)));
                 if(type == null) continue;
@@ -148,8 +150,19 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
     @Nullable
     @Override
-    public ICover remove(EnumFacing side, ICoverType type, boolean drop) {
-        ICover cover = covers.containsKey(side) ? covers.get(side).remove(type) : null;
+    public ICover remove(EnumFacing side, @Nullable ICoverType type, boolean drop) {
+        ICover cover = null;
+        if(covers.containsKey(side)) {
+            if(type == null) {
+                for(Map.Entry<ICoverType, ICover> entry : covers.get(side).entrySet()) {
+                    cover = entry.getValue();
+                    break;
+                }
+                if(cover != null) covers.get(side).remove(cover.getType());
+            } else {
+                cover = covers.get(side).remove(type);
+            }
+        }
         if(drop && cover != null) dropItems(side, cover);
         return cover;
     }
@@ -192,14 +205,31 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         }
     }
 
+    private boolean noRender(@Nullable ICoverRevealer revealer) {
+        if(revealer == null) return true;
+        for(Map<ICoverType, ICover> map : covers.values()) {
+            for(ICover cover : map.values()) {
+                if(revealer.shouldShowCover(cover)) return false;
+            }
+        }
+        return true;
+    }
+
+    @Nullable
+    private ICoverRevealer getRevealer(ItemStack stack) {
+        if(stack.getItem() instanceof ICoverRevealer) return (ICoverRevealer) stack.getItem();
+        else return stack.getCapability(getApi().getRevealerCapability(), null);
+    }
+
     @SubscribeEvent
     public void render(RenderWorldLastEvent event) {
         if(covers.values().isEmpty()) return;
         Minecraft mc = Minecraft.getMinecraft();
         if(mc.player == null) return;
 
-        Item item = mc.player.getHeldItemMainhand().getItem();
-        if(!(item instanceof ICoverRevealer) || !((ICoverRevealer) item).showCovers()) return;
+        ICoverRevealer mRevealer = getRevealer(mc.player.getHeldItem(EnumHand.MAIN_HAND));
+        ICoverRevealer oRevealer = getRevealer(mc.player.getHeldItem(EnumHand.OFF_HAND));
+        if(noRender(mRevealer) && noRender(oRevealer)) return;
 
         mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
@@ -213,9 +243,10 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         GlStateManager.pushMatrix();
         GlStateManager.translate(-tx, -ty, -tz);
         GlStateManager.disableDepth();
-        for(Map<ICoverType, ICover> m : covers.values()) {
-            for(ICover c : m.values()) {
-                c.render();
+        for(Map<ICoverType, ICover> map : covers.values()) {
+            for(ICover cover : map.values()) {
+                if((mRevealer != null && mRevealer.shouldShowCover(cover)) ||
+                        (oRevealer != null && oRevealer.shouldShowCover(cover))) cover.render();
             }
         }
         GlStateManager.enableDepth();

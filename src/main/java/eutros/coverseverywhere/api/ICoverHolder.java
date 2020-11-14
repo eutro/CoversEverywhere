@@ -14,6 +14,6 @@ public interface ICoverHolder extends INBTSerializable<NBTTagCompound> {
     ICover get(EnumFacing side, ICoverType type);
 
     @Nullable
-    ICover remove(EnumFacing side, ICoverType type, boolean drop);
+    ICover remove(EnumFacing side, @Nullable ICoverType type, boolean drop);
 
 }
