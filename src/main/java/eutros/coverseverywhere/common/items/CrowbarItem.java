@@ -36,15 +36,13 @@ public class CrowbarItem extends Item implements ICoverRevealer {
         if(holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
-        Iterator<ICover> it = holder.get(side).iterator();
-        if(it.hasNext()) {
-            ICover cover = it.next();
-            it.remove();
-            tile.markDirty();
+        Collection<ICover> covers = holder.get(side);
+        for(ICover cover : covers) {
             holder.drop(side, cover);
-            return EnumActionResult.SUCCESS;
         }
-        return EnumActionResult.FAIL;
+        covers.clear();
+        tile.markDirty();
+        return EnumActionResult.SUCCESS;
     }
 
 }
