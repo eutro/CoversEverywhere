@@ -5,6 +5,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import javax.annotation.Nullable;
+import java.util.Set;
 
 public interface ICoverHolder extends INBTSerializable<NBTTagCompound> {
 
@@ -14,6 +15,8 @@ public interface ICoverHolder extends INBTSerializable<NBTTagCompound> {
     ICover get(EnumFacing side, ICoverType type);
 
     @Nullable
-    ICover remove(EnumFacing side, @Nullable ICoverType type, boolean drop);
+    ICover remove(EnumFacing side, ICoverType type, boolean drop);
+
+    Set<ICoverType> getTypes(EnumFacing side);
 
 }

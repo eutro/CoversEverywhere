@@ -1,5 +1,6 @@
 package eutros.coverseverywhere.api;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.INBTSerializable;
@@ -19,5 +20,9 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
     void render();
 
     List<ItemStack> getDrops();
+
+    default boolean configure(EntityPlayer player) {
+        return false;
+    }
 
 }

@@ -13,6 +13,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 public class ModItems {
 
     public static CrowbarItem CROWBAR;
+    public static ScrewdriverItem SCREWDRIVER;
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(ModItems.class);
@@ -23,11 +24,13 @@ public class ModItems {
         IForgeRegistry<Item> r = evt.getRegistry();
 
         r.register(CROWBAR = new CrowbarItem());
+        r.register(SCREWDRIVER = new ScrewdriverItem());
     }
 
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent evt) {
         registerModel(CROWBAR, CrowbarItem.NAME);
+        registerModel(SCREWDRIVER, ScrewdriverItem.NAME);
     }
 
     public static void registerModel(Item item, ResourceLocation name) {

@@ -1,6 +1,7 @@
 package eutros.coverseverywhere.common.covers;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import eutros.coverseverywhere.CoversEverywhere;
 import eutros.coverseverywhere.api.*;
 import eutros.coverseverywhere.common.util.NbtSerializableStorage;
@@ -29,10 +30,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.EnumMap;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
@@ -150,21 +148,18 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
     @Nullable
     @Override
-    public ICover remove(EnumFacing side, @Nullable ICoverType type, boolean drop) {
+    public ICover remove(EnumFacing side, ICoverType type, boolean drop) {
         ICover cover = null;
         if(covers.containsKey(side)) {
-            if(type == null) {
-                for(Map.Entry<ICoverType, ICover> entry : covers.get(side).entrySet()) {
-                    cover = entry.getValue();
-                    break;
-                }
-                if(cover != null) covers.get(side).remove(cover.getType());
-            } else {
-                cover = covers.get(side).remove(type);
-            }
+            cover = covers.get(side).remove(type);
+            if(drop && cover != null) dropItems(side, cover);
         }
-        if(drop && cover != null) dropItems(side, cover);
         return cover;
+    }
+
+    @Override
+    public Set<ICoverType> getTypes(EnumFacing side) {
+        return covers.containsKey(side) ? ImmutableSet.copyOf(covers.get(side).keySet()) : Collections.emptySet();
     }
 
     private void dropItems(EnumFacing side, ICover cover) {

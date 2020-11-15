@@ -16,11 +16,11 @@ import java.util.Set;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
-public class CrowbarItem extends Item implements ICoverRevealer {
+public class ScrewdriverItem extends Item implements ICoverRevealer {
 
-    public static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "crowbar");
+    public static ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "screwdriver");
 
-    public CrowbarItem() {
+    public ScrewdriverItem() {
         setRegistryName(NAME);
         setUnlocalizedName(NAME.getResourceDomain() + "." + NAME.getResourcePath());
     }
@@ -35,11 +35,14 @@ public class CrowbarItem extends Item implements ICoverRevealer {
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
         Set<ICoverType> types = holder.getTypes(side);
-        boolean success = false;
-        for(ICoverType type : types) {
-            success |= holder.remove(side, type, true) != null;
-        }
-        return success ? EnumActionResult.FAIL : EnumActionResult.SUCCESS;
+        if(types.isEmpty()) return EnumActionResult.PASS;
+
+        // FIXME this should be deterministic between runs and, you know, less bad
+        ICoverType type = types.iterator().next();
+        ICover cover = holder.get(side, type);
+        if(cover == null) return EnumActionResult.PASS;
+
+        return cover.configure(player) ? EnumActionResult.SUCCESS : EnumActionResult.FAIL;
     }
 
 }
