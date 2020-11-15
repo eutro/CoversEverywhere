@@ -19,6 +19,7 @@ public class GTCECompat {
     private static void init() {
         MinecraftForge.EVENT_BUS.register(GTCECompat.class);
         GregTechItemCompatHandler.init();
+        GregTechNetworking.init();
     }
 
     public static void check() {
