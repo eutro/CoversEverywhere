@@ -102,8 +102,8 @@ public class GTCECompat {
         TileEntity tile = world.getTileEntity(pos);
         if(tile == null) return;
 
-        ICoverHolder cap = tile.getCapability(CoversEverywhereAPI.getApi().getHolderCapability(), null);
-        if(cap == null) return;
+        ICoverHolder holder = tile.getCapability(CoversEverywhereAPI.getApi().getHolderCapability(), null);
+        if(holder == null) return;
 
         Vec3d eyes = player.getPositionEyes(0);
         RayTraceResult rtr = world.rayTraceBlocks(eyes, eyes.add(player.getLookVec().scale(10))); // nobody will have more than 10 reach right?
@@ -112,7 +112,8 @@ public class GTCECompat {
         EnumFacing side = GridSection.fromXYZ(facing, (float) rtr.hitVec.x, (float) rtr.hitVec.y, (float) rtr.hitVec.z).offset(facing);
 
         GregTechCover cover = new GregTechCover(behaviour.coverDefinition.createCoverBehavior(new TileWrapper(tile), side), tile, side);
-        cap.put(side, cover);
+        holder.put(side, cover);
+        tile.markDirty();
         if(!player.isCreative()) player.getHeldItem(hand).shrink(1);
 
         evt.setCanceled(true);

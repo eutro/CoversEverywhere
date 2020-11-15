@@ -14,7 +14,8 @@ public class GregTechCoverType extends AbstractCoverType {
 
     public static final ICoverType INSTANCE = new GregTechCoverType();
 
-    public static final String DEFINITION_KEY = CoversEverywhere.MOD_ID + ":gregtech_definition_key";
+    private static final String TYPE_KEY = "type";
+    private static final String DATA_KEY = "data";
 
     protected GregTechCoverType() {
         super(CoversEverywhere.MOD_ID, "gregtech");
@@ -22,11 +23,24 @@ public class GregTechCoverType extends AbstractCoverType {
 
     @Override
     public ICover makeCover(TileEntity tile, EnumFacing side, NBTTagCompound nbt) {
-        CoverDefinition definition = CoverDefinition.getCoverById(new ResourceLocation(nbt.getString(DEFINITION_KEY)));
+        CoverDefinition definition = CoverDefinition.getCoverById(new ResourceLocation(nbt.getString(TYPE_KEY)));
         if(definition == null) return null;
         GregTechCover cover = new GregTechCover(definition.createCoverBehavior(new TileWrapper(tile), side), tile, side);
-        cover.deserializeNBT(nbt);
+        cover.deserializeNBT(nbt.getCompoundTag(DATA_KEY));
         return cover;
+    }
+
+    @Override
+    public NBTTagCompound serialize(ICover cover) {
+        NBTTagCompound nbt = new NBTTagCompound();
+        nbt.setString(TYPE_KEY,
+                ((GregTechCover) cover)
+                        .getBehaviour()
+                        .getCoverDefinition()
+                        .getCoverId()
+                        .toString());
+        nbt.setTag(DATA_KEY, cover.serializeNBT());
+        return nbt;
     }
 
 }

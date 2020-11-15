@@ -12,8 +12,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-import java.util.Set;
-
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
 public class ScrewdriverItem extends Item implements ICoverRevealer {
@@ -34,15 +32,10 @@ public class ScrewdriverItem extends Item implements ICoverRevealer {
         if(holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
-        Set<ICoverType> types = holder.getTypes(side);
-        if(types.isEmpty()) return EnumActionResult.PASS;
-
-        // FIXME this should be deterministic between runs and, you know, less bad
-        ICoverType type = types.iterator().next();
-        ICover cover = holder.get(side, type);
-        if(cover == null) return EnumActionResult.PASS;
-
-        return cover.configure(player, hand, hitX, hitY, hitZ) ? EnumActionResult.SUCCESS : EnumActionResult.FAIL;
+        for(ICover cover : holder.get(side)) {
+            if(cover.configure(player, hand, hitX, hitY, hitZ)) return EnumActionResult.SUCCESS;
+        }
+        return EnumActionResult.FAIL;
     }
 
 }

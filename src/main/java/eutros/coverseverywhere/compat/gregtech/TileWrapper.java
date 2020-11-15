@@ -15,6 +15,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 
 import javax.annotation.Nullable;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
@@ -66,11 +67,9 @@ class TileWrapper implements ICoverable {
 
         CoverBehavior coverBehavior = coverDefinition.createCoverBehavior(this, side);
         coverBehavior.onAttached(itemStack);
-        if(holder.get(side, GregTechCoverType.INSTANCE) == null) {
-            holder.put(side, new GregTechCover(coverBehavior, tile, side));
-            return true;
-        }
-        return false;
+        holder.put(side, new GregTechCover(coverBehavior, tile, side));
+        tile.markDirty();
+        return true;
     }
 
     @Override
@@ -78,15 +77,22 @@ class TileWrapper implements ICoverable {
         ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
         if(holder == null) return false;
 
-        return holder.remove(side, GregTechCoverType.INSTANCE, true) != null;
+        Iterator<ICover> it = holder.get(side).iterator();
+        while(it.hasNext()) {
+            ICover cover = it.next();
+            if(cover instanceof GregTechCover) {
+                it.remove();
+                tile.markDirty();
+                holder.drop(side, cover);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean canPlaceCoverOnSide(EnumFacing side) {
-        ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
-        if(holder == null) return false;
-
-        return holder.get(side, GregTechCoverType.INSTANCE) == null;
+        return tile.hasCapability(getApi().getHolderCapability(), null);
     }
 
     @Nullable
@@ -95,8 +101,9 @@ class TileWrapper implements ICoverable {
         ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
         if(holder == null) return null;
 
-        ICover cover = holder.get(side, GregTechCoverType.INSTANCE);
-        if(cover instanceof GregTechCover) return ((GregTechCover) cover).getBehaviour();
+        for(ICover cover : holder.get(side)) {
+            if(cover instanceof GregTechCover) return ((GregTechCover) cover).getBehaviour();
+        }
         return null;
     }
 

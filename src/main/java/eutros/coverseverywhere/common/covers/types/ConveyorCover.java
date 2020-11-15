@@ -127,6 +127,11 @@ public class ConveyorCover implements ICover {
             return cover;
         }
 
+        @Override
+        public NBTTagCompound serialize(ICover cover) {
+            return cover.serializeNBT();
+        }
+
     }
 
 }

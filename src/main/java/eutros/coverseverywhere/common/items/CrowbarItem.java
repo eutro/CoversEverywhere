@@ -12,6 +12,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
@@ -34,12 +36,15 @@ public class CrowbarItem extends Item implements ICoverRevealer {
         if(holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
-        Set<ICoverType> types = holder.getTypes(side);
-        boolean success = false;
-        for(ICoverType type : types) {
-            success |= holder.remove(side, type, true) != null;
+        Iterator<ICover> it = holder.get(side).iterator();
+        if(it.hasNext()) {
+            ICover cover = it.next();
+            it.remove();
+            tile.markDirty();
+            holder.drop(side, cover);
+            return EnumActionResult.SUCCESS;
         }
-        return success ? EnumActionResult.FAIL : EnumActionResult.SUCCESS;
+        return EnumActionResult.FAIL;
     }
 
 }

@@ -14,7 +14,9 @@ import java.util.List;
  * A cover instance that is to be on a tile entity.
  *
  * Typically, one may wish to hold a reference to the side and tile entity that the cover is on.
- * Any extra data should be serialized by implementing {@link INBTSerializable}.
+ *
+ * {@link INBTSerializable} is implemented for convenience, but the associated {@link ICoverType}'s
+ * {@link ICoverType#serialize(ICover)} has to call it.
  *
  * Can be attached to and obtained from tiles by {@link ICoverHolder}.
  */
@@ -48,7 +50,7 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
 
     /**
      * Configure this cover, called when the cover is activated with a screwdriver.
-     *
+     * <p>
      * This might open a GUI, or just change the state immediately.
      *
      * @return Whether configuration had any effect.

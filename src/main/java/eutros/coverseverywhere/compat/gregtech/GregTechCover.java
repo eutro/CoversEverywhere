@@ -61,7 +61,6 @@ public class GregTechCover implements ICover {
     public NBTTagCompound serializeNBT() {
         NBTTagCompound tag = new NBTTagCompound();
         behavior.writeToNBT(tag);
-        tag.setString(GregTechCoverType.DEFINITION_KEY, behavior.getCoverDefinition().getCoverId().toString());
         return tag;
     }
 

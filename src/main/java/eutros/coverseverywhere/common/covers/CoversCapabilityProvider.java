@@ -1,9 +1,13 @@
 package eutros.coverseverywhere.common.covers;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import eutros.coverseverywhere.CoversEverywhere;
-import eutros.coverseverywhere.api.*;
+import eutros.coverseverywhere.api.ICover;
+import eutros.coverseverywhere.api.ICoverHolder;
+import eutros.coverseverywhere.api.ICoverRevealer;
+import eutros.coverseverywhere.api.ICoverType;
 import eutros.coverseverywhere.common.util.CapHelper;
 import eutros.coverseverywhere.common.util.NbtSerializableStorage;
 import eutros.coverseverywhere.common.util.NoOpStorage;
@@ -13,10 +17,11 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -25,9 +30,12 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,10 +45,11 @@ import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
 public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHolder {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "covers");
 
-    private final Map<EnumFacing, Map<ICoverType, ICover>> covers = new EnumMap<>(EnumFacing.class);
-    @Nullable
+    private final Multimap<EnumFacing, ICover> covers = LinkedHashMultimap.create();
+    @Nullable // null means this has been invalidated
     private TileEntity tile;
 
     public CoversCapabilityProvider() {
@@ -70,29 +79,39 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
     @Override
     public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-        return capability == getApi().getHolderCapability();
+        return tile != null && capability == getApi().getHolderCapability();
     }
 
     @Nullable
     @Override
     public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-        return capability == getApi().getHolderCapability() ? getApi().getHolderCapability().cast(this) :
+        return tile == null ? null :
+               capability == getApi().getHolderCapability() ? getApi().getHolderCapability().cast(this) :
                null;
     }
+
+    private static final String TYPE_TAG = "type";
+    private static final String DATA_TAG = "data";
 
     @Override
     public NBTTagCompound serializeNBT() {
         NBTTagCompound nbt = new NBTTagCompound();
-        if(tile == null) return nbt; // shouldn't serialize with a null tile
-        for(Map.Entry<EnumFacing, Map<ICoverType, ICover>> e1 : covers.entrySet()) {
-            NBTTagCompound sideNbt = new NBTTagCompound();
-            for(Map.Entry<ICoverType, ICover> e2 : e1.getValue().entrySet()) {
-                sideNbt.setTag(Preconditions.checkNotNull(e2.getKey().getRegistryName(),
-                        "Attempted to serialize unregistered cover type: %s", e2.getKey())
-                                .toString(),
-                        e2.getValue().serializeNBT());
+        if(tile == null) {
+            destroy();
+            return nbt;
+        }
+        for(EnumFacing side : EnumFacing.values()) {
+            NBTTagList sideNbt = new NBTTagList();
+            for(ICover cover : covers.get(side)) {
+                ICoverType type = cover.getType();
+                NBTTagCompound coverNbt = new NBTTagCompound();
+                coverNbt.setString(TYPE_TAG, Preconditions.checkNotNull(type.getRegistryName(),
+                        "Attempted to serialize unregistered cover type: %s", type)
+                        .toString());
+                coverNbt.setTag(DATA_TAG, type.serialize(cover));
+                sideNbt.appendTag(coverNbt);
             }
-            nbt.setTag(e1.getKey().getName(), sideNbt);
+            nbt.setTag(side.getName(), sideNbt);
         }
         return nbt;
     }
@@ -100,75 +119,53 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
         if(tile == null) {
-            // cannot deserialize with null tile
             destroy();
             return;
         }
         covers.clear();
         for(String key : nbt.getKeySet()) {
-            EnumFacing facing = EnumFacing.byName(key);
-            if(facing == null) continue;
-            IdentityHashMap<ICoverType, ICover> side = new IdentityHashMap<>();
-            covers.put(facing, side);
-            NBTTagCompound sideNbt = nbt.getCompoundTag(key);
-            for(String id : sideNbt.getKeySet()) {
-                ICoverType type = getApi()
-                        .getRegistry()
-                        .getValue(new ResourceLocation(sideNbt.getString(id)));
-                if(type == null) continue;
-                ICover cover = type.makeCover(tile, facing, sideNbt.getCompoundTag(id));
-                if(cover != null) side.put(type, cover);
+            EnumFacing side = EnumFacing.byName(key);
+            if(side == null) continue;
+            NBTTagList tagList = nbt.getTagList(key, Constants.NBT.TAG_COMPOUND);
+            for(NBTBase tag : tagList) {
+                NBTTagCompound coverNbt = (NBTTagCompound) tag;
+                ResourceLocation typeLoc = new ResourceLocation(coverNbt.getString(TYPE_TAG));
+                ICoverType type = getApi().getRegistry().getValue(typeLoc);
+                if(type == null) {
+                    LOGGER.warn("Unknown cover type: {}.", typeLoc);
+                    continue;
+                }
+                ICover cover = type.makeCover(tile, side, coverNbt.getCompoundTag(DATA_TAG));
+                if(cover != null) covers.put(side, cover);
             }
         }
     }
 
     private void destroy() {
         MinecraftForge.EVENT_BUS.unregister(this);
-        for(Map.Entry<EnumFacing, Map<ICoverType, ICover>> entry : covers.entrySet()) {
-            for(ICover cover : entry.getValue().values()) {
-                dropItems(entry.getKey(), cover);
+        for(EnumFacing side : covers.keySet()) {
+            for(ICover cover : covers.get(side)) {
+                drop(side, cover);
             }
         }
-        tile = null;
         covers.clear();
+        tile = null;
     }
 
     // ICoverHolder implementation
 
     @Override
     public void put(@Nonnull EnumFacing side, @Nonnull ICover cover) {
-        Map<ICoverType, ICover> map;
-        if(!covers.containsKey(side)) covers.put(side, map = new IdentityHashMap<>());
-        else map = covers.get(side);
-
-        ICoverType type = cover.getType();
-        remove(side, type, true);
-        map.put(type, cover);
-    }
-
-    @Nullable
-    @Override
-    public ICover get(EnumFacing side, ICoverType type) {
-        return covers.containsKey(side) ? covers.get(side).get(type) : null;
-    }
-
-    @Nullable
-    @Override
-    public ICover remove(EnumFacing side, ICoverType type, boolean drop) {
-        ICover cover = null;
-        if(covers.containsKey(side)) {
-            cover = covers.get(side).remove(type);
-            if(drop && cover != null) dropItems(side, cover);
-        }
-        return cover;
+        covers.put(side, cover);
     }
 
     @Override
-    public Set<ICoverType> getTypes(EnumFacing side) {
-        return covers.containsKey(side) ? ImmutableSet.copyOf(covers.get(side).keySet()) : Collections.emptySet();
+    public Collection<ICover> get(EnumFacing side) {
+        return covers.get(side);
     }
 
-    private void dropItems(EnumFacing side, ICover cover) {
+    @Override
+    public void drop(EnumFacing side, ICover cover) {
         Preconditions.checkNotNull(tile, "Cannot drop items with null tile!");
         Vec3d pos = new Vec3d(tile.getPos())
                 .addVector(0.5, 0.5, 0.5)
@@ -198,25 +195,26 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
                 destroy();
                 return;
             }
-            for(Map<ICoverType, ICover> m : covers.values()) {
-                for(ICover c : m.values()) {
-                    c.tick();
-                }
+            for(ICover cover : covers.values()) {
+                cover.tick();
             }
         }
     }
 
     private boolean noRender(ICoverRevealer revealer) {
-        for(Map<ICoverType, ICover> map : covers.values()) {
-            for(ICover cover : map.values()) {
-                if(revealer.shouldShowCover(cover)) return false;
-            }
+        for(ICover cover : covers.values()) {
+            if(revealer.shouldShowCover(cover)) return false;
         }
         return true;
     }
 
     @SubscribeEvent
     public void render(RenderWorldLastEvent event) {
+        if(tile == null) {
+            destroy();
+            return;
+        }
+
         if(covers.values().isEmpty()) return;
         Minecraft mc = Minecraft.getMinecraft();
         if(mc.player == null) return;
@@ -236,10 +234,8 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         GlStateManager.pushMatrix();
         GlStateManager.translate(-tx, -ty, -tz);
         GlStateManager.disableDepth();
-        for(Map<ICoverType, ICover> map : covers.values()) {
-            for(ICover cover : map.values()) {
-                if(revealer.shouldShowCover(cover)) cover.render();
-            }
+        for(ICover cover : covers.values()) {
+            if(revealer.shouldShowCover(cover)) cover.render();
         }
         GlStateManager.enableDepth();
         GlStateManager.popMatrix();
