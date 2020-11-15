@@ -4,6 +4,7 @@ import eutros.coverseverywhere.CoversEverywhere;
 import eutros.coverseverywhere.api.*;
 import eutros.coverseverywhere.common.util.SingletonCapProvider;
 import gregtech.api.capability.GregtechCapabilities;
+import gregtech.api.capability.tool.IScrewdriverItem;
 import gregtech.api.items.metaitem.MetaItem;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -117,12 +118,13 @@ public class GregTechItemCompatHandler {
         public static void onInteract(PlayerInteractEvent.RightClickBlock evt) {
             ItemStack stack = evt.getItemStack();
 
-            if(stack.hasCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null)) {
-                configureCover(evt);
+            IScrewdriverItem screwdriver = stack.getCapability(GregtechCapabilities.CAPABILITY_SCREWDRIVER, null);
+            if(screwdriver != null) {
+                configureCover(evt, screwdriver);
             }
         }
 
-        private static void configureCover(PlayerInteractEvent.RightClickBlock evt) {
+        private static void configureCover(PlayerInteractEvent.RightClickBlock evt, IScrewdriverItem screwdriver) {
             BlockPos pos1 = evt.getPos();
             EnumFacing facing = evt.getFace();
             Vec3d hitVec1 = evt.getHitVec();
@@ -153,6 +155,7 @@ public class GregTechItemCompatHandler {
                         (float) hitVec.z - pos.getZ())) {
                     evt.setCanceled(true);
                     evt.setCancellationResult(EnumActionResult.SUCCESS);
+                    screwdriver.damageItem(1, false);
                 }
             }
         }

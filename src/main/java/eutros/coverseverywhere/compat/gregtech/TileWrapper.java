@@ -23,6 +23,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
@@ -32,6 +34,7 @@ import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
 class TileWrapper implements ICoverable {
 
+    public static final Logger LOGGER = LogManager.getLogger();
     final TileEntity tile;
 
     public TileWrapper(TileEntity tile) {
@@ -117,20 +120,40 @@ class TileWrapper implements ICoverable {
     }
 
     void handle(int discriminator, PacketBuffer buf) {
-        if(discriminator == 0) {
-            EnumFacing side = EnumFacing.VALUES[buf.readByte()];
-            int coverId = buf.readVarInt();
-            CoverDefinition definition = CoverDefinition.getCoverByNetworkId(coverId);
-            CoverBehavior behaviour = definition.createCoverBehavior(this, side);
-            behaviour.readInitialSyncData(buf);
-            ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
-            if(holder != null) holder.put(side, new GregTechCover(behaviour, tile, side));
-        } else if(discriminator == 1) {
-            EnumFacing side = EnumFacing.VALUES[buf.readByte()];
-            CoverBehavior behavior = getCoverAtSide(side);
-            int internalId = buf.readVarInt();
-            if(behavior != null) {
-                behavior.readUpdateData(internalId, buf);
+        switch(discriminator) {
+            case 0: {
+                EnumFacing side = EnumFacing.VALUES[buf.readByte()];
+                int coverId = buf.readVarInt();
+                CoverDefinition definition = CoverDefinition.getCoverByNetworkId(coverId);
+                CoverBehavior behaviour = definition.createCoverBehavior(this, side);
+                behaviour.readInitialSyncData(buf);
+                ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
+                if(holder != null) holder.put(side, new GregTechCover(behaviour, tile, side));
+                break;
+            }
+            case 1: {
+                EnumFacing side = EnumFacing.VALUES[buf.readByte()];
+                CoverBehavior behavior = getCoverAtSide(side);
+                int internalId = buf.readVarInt();
+                if(behavior != null) behavior.readUpdateData(internalId, buf);
+                break;
+            }
+            case 2: {
+                EnumFacing side = EnumFacing.VALUES[buf.readByte()];
+                ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
+                if(holder != null) {
+                    Iterator<ICover> it = holder.get(side).iterator();
+                    while(it.hasNext()) {
+                        ICover cover = it.next();
+                        if(cover instanceof GregTechCover) {
+                            it.remove();
+                            break;
+                        }
+                    }
+                }
+            }
+            default: {
+                LOGGER.warn("Unrecognised discriminator: {}", discriminator);
             }
         }
     }
@@ -195,6 +218,7 @@ class TileWrapper implements ICoverable {
             if(cover instanceof GregTechCover) {
                 it.remove();
                 tile.markDirty();
+                sendToClients(2, buf -> buf.writeByte(side.getIndex()));
                 holder.drop(side, cover);
                 return true;
             }
