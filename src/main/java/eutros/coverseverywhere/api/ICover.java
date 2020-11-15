@@ -12,12 +12,12 @@ import java.util.List;
 
 /**
  * A cover instance that is to be on a tile entity.
- *
+ * <p>
  * Typically, one may wish to hold a reference to the side and tile entity that the cover is on.
- *
+ * <p>
  * {@link INBTSerializable} is implemented for convenience, but the associated {@link ICoverType}'s
  * {@link ICoverType#serialize(ICover)} has to call it.
- *
+ * <p>
  * Can be attached to and obtained from tiles by {@link ICoverHolder}.
  */
 public interface ICover extends INBTSerializable<NBTTagCompound> {
@@ -38,15 +38,21 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
     }
 
     /**
-     * Called each frame to render the cover at its position.
+     * Called when the cover is removed.
      */
-    @SideOnly(Side.CLIENT)
-    void render();
+    default void onRemoved() {
+    }
 
     /**
      * @return The list of stacks to drop when the cover is removed.
      */
     List<ItemStack> getDrops();
+
+    /**
+     * Called each frame to render the cover at its position.
+     */
+    @SideOnly(Side.CLIENT)
+    void render();
 
     /**
      * Configure this cover, called when the cover is activated with a screwdriver.

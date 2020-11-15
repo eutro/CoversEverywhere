@@ -13,8 +13,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
@@ -38,6 +36,7 @@ public class CrowbarItem extends Item implements ICoverRevealer {
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
         Collection<ICover> covers = holder.get(side);
         for(ICover cover : covers) {
+            cover.onRemoved();
             holder.drop(side, cover);
         }
         covers.clear();

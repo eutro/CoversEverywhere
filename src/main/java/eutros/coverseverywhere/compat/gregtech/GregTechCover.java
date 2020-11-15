@@ -115,6 +115,11 @@ public class GregTechCover implements ICover {
         return behavior.onScrewdriverClick(player, hand, crt) == EnumActionResult.SUCCESS;
     }
 
+    @Override
+    public void onRemoved() {
+        behavior.onRemoved();
+    }
+
     public CoverBehavior getBehaviour() {
         return behavior;
     }

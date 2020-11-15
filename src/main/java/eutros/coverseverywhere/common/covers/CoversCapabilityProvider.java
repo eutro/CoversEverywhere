@@ -141,6 +141,7 @@ public class CoversCapabilityProvider extends SingletonCapProvider<ICoverHolder>
         MinecraftForge.EVENT_BUS.unregister(this);
         for(EnumFacing side : covers.keySet()) {
             for(ICover cover : covers.get(side)) {
+                cover.onRemoved();
                 drop(side, cover);
             }
         }
