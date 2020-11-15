@@ -16,7 +16,7 @@ import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
 public class ScrewdriverItem extends Item implements ICoverRevealer {
 
-    public static ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "screwdriver");
+    public static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "screwdriver");
 
     public ScrewdriverItem() {
         setRegistryName(NAME);

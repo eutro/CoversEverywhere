@@ -61,7 +61,7 @@ public class GregTechItemCompatHandler {
 
         private static class GregTechRevealer implements ICoverRevealer {
 
-            static GregTechRevealer INSTANCE = new GregTechRevealer();
+            static final GregTechRevealer INSTANCE = new GregTechRevealer();
 
             @Override
             public boolean shouldShowGrid() {

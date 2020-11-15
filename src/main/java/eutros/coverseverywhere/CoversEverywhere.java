@@ -1,6 +1,5 @@
 package eutros.coverseverywhere;
 
-import eutros.coverseverywhere.common.CoversEverywhereAPIImpl;
 import eutros.coverseverywhere.common.covers.Covers;
 import eutros.coverseverywhere.common.covers.CoversCapabilityProvider;
 import eutros.coverseverywhere.common.items.ModItems;
@@ -18,7 +17,6 @@ public class CoversEverywhere {
     public static final String VERSION = "GRADLE:VERSION";
 
     public CoversEverywhere() {
-        CoversEverywhereAPIImpl.init();
         Covers.init();
         ModItems.init();
         GTCECompat.check();

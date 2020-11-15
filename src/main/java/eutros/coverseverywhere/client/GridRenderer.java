@@ -8,9 +8,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
@@ -25,9 +23,9 @@ import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 @Mod.EventBusSubscriber(modid = CoversEverywhere.MOD_ID, value = Side.CLIENT)
 public class GridRenderer {
 
-    private static AxisAlignedBB X_PLANE = new AxisAlignedBB(0.25, 0, 0, 0.75, 1, 1);
-    private static AxisAlignedBB Y_PLANE = new AxisAlignedBB(0, 0.25, 0, 1, 0.75, 1);
-    private static AxisAlignedBB Z_PLANE = new AxisAlignedBB(0, 0, 0.25, 1, 1, 0.75);
+    private static final AxisAlignedBB X_PLANE = new AxisAlignedBB(0.25, 0, 0, 0.75, 1, 1);
+    private static final AxisAlignedBB Y_PLANE = new AxisAlignedBB(0, 0.25, 0, 1, 0.75, 1);
+    private static final AxisAlignedBB Z_PLANE = new AxisAlignedBB(0, 0, 0.25, 1, 1, 0.75);
 
     /**
      * @see RenderGlobal#drawSelectionBox(EntityPlayer, RayTraceResult, int, float)

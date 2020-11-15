@@ -79,7 +79,7 @@ public enum GridSection {
         return fromXY(sx, sy);
     }
 
-    private static GridSection[][] GRID = {
+    private static final GridSection[][] GRID = {
             {CORNER, DOWN, DOWN, CORNER},
             {LEFT, CENTER, CENTER, RIGHT},
             {LEFT, CENTER, CENTER, RIGHT},

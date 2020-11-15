@@ -30,11 +30,11 @@ import java.util.List;
 public class ConveyorCover implements ICover {
 
     public static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "conveyor");
-    public static Type TYPE = new Type();
-    public static Item ITEM = new Item();
+    public static final Type TYPE = new Type();
+    public static final Item ITEM = new Item();
 
     private final TileEntity tile;
-    private EnumFacing side;
+    private final EnumFacing side;
 
     public ConveyorCover(TileEntity tile, EnumFacing side) {
         this.side = side;

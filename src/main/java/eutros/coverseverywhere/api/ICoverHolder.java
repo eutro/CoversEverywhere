@@ -1,12 +1,10 @@
 package eutros.coverseverywhere.api;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Holds and dispatches to the {@link ICover}s on a tile entity.
