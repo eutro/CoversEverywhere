@@ -42,7 +42,7 @@ public class ScrewdriverItem extends Item implements ICoverRevealer {
         ICover cover = holder.get(side, type);
         if(cover == null) return EnumActionResult.PASS;
 
-        return cover.configure(player) ? EnumActionResult.SUCCESS : EnumActionResult.FAIL;
+        return cover.configure(player, hand, hitX, hitY, hitZ) ? EnumActionResult.SUCCESS : EnumActionResult.FAIL;
     }
 
 }

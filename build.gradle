@@ -45,6 +45,30 @@ minecraft {
     replace "GRADLE:VERSION", project.version
 }
 
+repositories {
+    maven {
+        url = "https://minecraft.curseforge.com/api/maven"
+    }
+    maven {
+        url = "http://chickenbones.net/maven/"
+    }
+    maven {
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
+    maven {
+        url = "https://modmaven.k-4u.nl"
+    }
+}
+
+dependencies {
+    deobfProvided "mezz.jei:jei_1.12.2:4.15.0.293:api"
+    runtime "mezz.jei:jei_1.12.2:4.15.0.293"
+
+    deobfCompile "gregtechce:gregtech:1.12.2:1.10.5.582"
+
+    deobfCompile "codechicken-lib-1-8:CodeChickenLib-1.12.2:3.2.3.357:universal"
+}
+
 processResources {
     // this will ensure that this task is redone when the versions change.
     inputs.property "version", project.version

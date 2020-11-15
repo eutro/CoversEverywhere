@@ -3,7 +3,7 @@ package eutros.coverseverywhere.api;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
-public abstract class AbstractCoverType<T extends ICover>
+public abstract class AbstractCoverType
         extends IForgeRegistryEntry.Impl<ICoverType>
         implements ICoverType {
 

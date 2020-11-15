@@ -4,6 +4,7 @@ import eutros.coverseverywhere.common.CoversEverywhereAPIImpl;
 import eutros.coverseverywhere.common.covers.Covers;
 import eutros.coverseverywhere.common.covers.CoversCapabilityProvider;
 import eutros.coverseverywhere.common.items.ModItems;
+import eutros.coverseverywhere.compat.gregtech.GTCECompat;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
@@ -20,6 +21,7 @@ public class CoversEverywhere {
         CoversEverywhereAPIImpl.init();
         Covers.init();
         ModItems.init();
+        GTCECompat.check();
     }
 
     @Mod.EventHandler

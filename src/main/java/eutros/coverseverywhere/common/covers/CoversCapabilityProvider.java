@@ -103,15 +103,18 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         }
         covers.clear();
         for(String key : nbt.getKeySet()) {
+            EnumFacing facing = EnumFacing.byName(key);
+            if(facing == null) continue;
             IdentityHashMap<ICoverType, ICover> side = new IdentityHashMap<>();
-            covers.put(EnumFacing.byName(key), side);
+            covers.put(facing, side);
             NBTTagCompound sideNbt = nbt.getCompoundTag(key);
             for(String id : sideNbt.getKeySet()) {
                 ICoverType type = getApi()
                         .getRegistry()
                         .getValue(new ResourceLocation(sideNbt.getString(id)));
                 if(type == null) continue;
-                side.put(type, type.makeCover(tile, sideNbt.getCompoundTag(id)));
+                ICover cover = type.makeCover(tile, facing, sideNbt.getCompoundTag(id));
+                if(cover != null) side.put(type, cover);
             }
         }
     }

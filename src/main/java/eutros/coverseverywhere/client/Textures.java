@@ -13,12 +13,12 @@ import net.minecraftforge.fml.relauncher.Side;
 @Mod.EventBusSubscriber(modid = CoversEverywhere.MOD_ID, value = Side.CLIENT)
 public class Textures {
 
-    public static TextureAtlasSprite COVER_SPRITE;
+    public static TextureAtlasSprite CONVEYOR_SPRITE;
 
     @SubscribeEvent
     public static void stitchTextures(TextureStitchEvent.Pre evt) {
         TextureMap map = evt.getMap();
-        COVER_SPRITE = map.registerSprite(transform(ConveyorCover.NAME));
+        CONVEYOR_SPRITE = map.registerSprite(transform(ConveyorCover.NAME));
     }
 
     private static ResourceLocation transform(ResourceLocation loc) {

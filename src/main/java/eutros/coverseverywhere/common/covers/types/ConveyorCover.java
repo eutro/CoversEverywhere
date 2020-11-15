@@ -44,10 +44,6 @@ public class ConveyorCover implements ICover {
         this.tile = tile;
     }
 
-    ConveyorCover(TileEntity tile) {
-        this.tile = tile;
-    }
-
     @Override
     public ICoverType getType() {
         return TYPE;
@@ -55,14 +51,11 @@ public class ConveyorCover implements ICover {
 
     @Override
     public NBTTagCompound serializeNBT() {
-        NBTTagCompound nbt = new NBTTagCompound();
-        nbt.setString("side", side.getName());
-        return nbt;
+        return new NBTTagCompound();
     }
 
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
-        side = EnumFacing.byName(nbt.getString("side"));
     }
 
     @Override
@@ -96,7 +89,7 @@ public class ConveyorCover implements ICover {
         Tessellator tes = Tessellator.getInstance();
         BufferBuilder buff = tes.getBuffer();
         buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        RenderHelper.side(buff, Textures.COVER_SPRITE, tile.getPos(), side);
+        RenderHelper.side(buff, Textures.CONVEYOR_SPRITE, tile.getPos(), side);
         tes.draw();
     }
 
@@ -124,15 +117,15 @@ public class ConveyorCover implements ICover {
 
     }
 
-    public static class Type extends AbstractCoverType<ConveyorCover> {
+    public static class Type extends AbstractCoverType {
 
         private Type() {
             super(NAME);
         }
 
         @Override
-        public ConveyorCover makeCover(TileEntity tile, NBTTagCompound nbt) {
-            ConveyorCover cover = new ConveyorCover(tile);
+        public ConveyorCover makeCover(TileEntity tile, EnumFacing side, NBTTagCompound nbt) {
+            ConveyorCover cover = new ConveyorCover(tile, side);
             cover.deserializeNBT(nbt);
             return cover;
         }

@@ -3,6 +3,7 @@ package eutros.coverseverywhere.api;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -21,7 +22,7 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
 
     List<ItemStack> getDrops();
 
-    default boolean configure(EntityPlayer player) {
+    default boolean configure(EntityPlayer player, EnumHand hand, float hitX, float hitY, float hitZ) {
         return false;
     }
 
