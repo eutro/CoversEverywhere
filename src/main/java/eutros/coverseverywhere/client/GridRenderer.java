@@ -2,6 +2,7 @@ package eutros.coverseverywhere.client;
 
 import eutros.coverseverywhere.CoversEverywhere;
 import eutros.coverseverywhere.api.ICoverRevealer;
+import eutros.coverseverywhere.common.util.CapHelper;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.GlStateManager;
@@ -28,14 +29,6 @@ public class GridRenderer {
     private static AxisAlignedBB Y_PLANE = new AxisAlignedBB(0, 0.25, 0, 1, 0.75, 1);
     private static AxisAlignedBB Z_PLANE = new AxisAlignedBB(0, 0, 0.25, 1, 1, 0.75);
 
-    private static boolean noReveal(ItemStack stack) {
-        ICoverRevealer revealer;
-        if(stack.getItem() instanceof ICoverRevealer) revealer = (ICoverRevealer) stack.getItem();
-        else revealer = stack.getCapability(getApi().getRevealerCapability(), null);
-        if(revealer == null) return true;
-        return !revealer.shouldShowGrid();
-    }
-
     /**
      * @see RenderGlobal#drawSelectionBox(EntityPlayer, RayTraceResult, int, float)
      */
@@ -43,8 +36,8 @@ public class GridRenderer {
     public static void renderGrid(DrawBlockHighlightEvent evt) {
         EntityPlayer player = evt.getPlayer();
 
-        if(noReveal(player.getHeldItem(EnumHand.MAIN_HAND)) &&
-                noReveal(player.getHeldItem(EnumHand.OFF_HAND))) return;
+        ICoverRevealer revealer = CapHelper.getRevealer(player);
+        if(revealer == null || !revealer.shouldShowGrid()) return;
 
         RayTraceResult movingObjectPositionIn = evt.getTarget();
         float partialTicks = evt.getPartialTicks();

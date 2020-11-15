@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import eutros.coverseverywhere.CoversEverywhere;
 import eutros.coverseverywhere.api.*;
+import eutros.coverseverywhere.common.util.CapHelper;
 import eutros.coverseverywhere.common.util.NbtSerializableStorage;
 import eutros.coverseverywhere.common.util.NoOpStorage;
 import net.minecraft.client.Minecraft;
@@ -86,7 +87,9 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         for(Map.Entry<EnumFacing, Map<ICoverType, ICover>> e1 : covers.entrySet()) {
             NBTTagCompound sideNbt = new NBTTagCompound();
             for(Map.Entry<ICoverType, ICover> e2 : e1.getValue().entrySet()) {
-                sideNbt.setTag(Objects.requireNonNull(e2.getKey().getRegistryName()).toString(),
+                sideNbt.setTag(Preconditions.checkNotNull(e2.getKey().getRegistryName(),
+                        "Attempted to serialize unregistered cover type: %s", e2.getKey())
+                                .toString(),
                         e2.getValue().serializeNBT());
             }
             nbt.setTag(e1.getKey().getName(), sideNbt);
@@ -203,8 +206,7 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         }
     }
 
-    private boolean noRender(@Nullable ICoverRevealer revealer) {
-        if(revealer == null) return true;
+    private boolean noRender(ICoverRevealer revealer) {
         for(Map<ICoverType, ICover> map : covers.values()) {
             for(ICover cover : map.values()) {
                 if(revealer.shouldShowCover(cover)) return false;
@@ -213,21 +215,14 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         return true;
     }
 
-    @Nullable
-    private ICoverRevealer getRevealer(ItemStack stack) {
-        if(stack.getItem() instanceof ICoverRevealer) return (ICoverRevealer) stack.getItem();
-        else return stack.getCapability(getApi().getRevealerCapability(), null);
-    }
-
     @SubscribeEvent
     public void render(RenderWorldLastEvent event) {
         if(covers.values().isEmpty()) return;
         Minecraft mc = Minecraft.getMinecraft();
         if(mc.player == null) return;
 
-        ICoverRevealer mRevealer = getRevealer(mc.player.getHeldItem(EnumHand.MAIN_HAND));
-        ICoverRevealer oRevealer = getRevealer(mc.player.getHeldItem(EnumHand.OFF_HAND));
-        if(noRender(mRevealer) && noRender(oRevealer)) return;
+        ICoverRevealer revealer = CapHelper.getRevealer(mc.player);
+        if(revealer == null || noRender(revealer)) return;
 
         mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
@@ -243,8 +238,7 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         GlStateManager.disableDepth();
         for(Map<ICoverType, ICover> map : covers.values()) {
             for(ICover cover : map.values()) {
-                if((mRevealer != null && mRevealer.shouldShowCover(cover)) ||
-                        (oRevealer != null && oRevealer.shouldShowCover(cover))) cover.render();
+                if(revealer.shouldShowCover(cover)) cover.render();
             }
         }
         GlStateManager.enableDepth();

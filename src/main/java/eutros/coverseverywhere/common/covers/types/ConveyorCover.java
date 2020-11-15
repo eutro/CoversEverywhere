@@ -17,8 +17,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -28,7 +26,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class ConveyorCover implements ICover {
 
@@ -106,8 +103,8 @@ public class ConveyorCover implements ICover {
         }
 
         @Override
-        protected ICover makeCover(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing) {
-            return new ConveyorCover(Objects.requireNonNull(worldIn.getTileEntity(pos)), facing);
+        protected ICover makeCover(TileEntity tile, EntityPlayer player, EnumHand hand, EnumFacing side) {
+            return new ConveyorCover(tile, side);
         }
 
         @Override
