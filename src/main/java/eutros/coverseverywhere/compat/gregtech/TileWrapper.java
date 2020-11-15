@@ -136,7 +136,7 @@ class TileWrapper implements ICoverable {
 
     @Override
     public boolean shouldRenderBackSide() {
-        return true;
+        return false;
     }
 
     @Override

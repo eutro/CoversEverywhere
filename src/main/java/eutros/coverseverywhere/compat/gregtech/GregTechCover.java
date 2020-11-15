@@ -2,24 +2,27 @@ package eutros.coverseverywhere.compat.gregtech;
 
 import codechicken.lib.raytracer.CuboidRayTraceResult;
 import codechicken.lib.raytracer.IndexedCuboid6;
+import codechicken.lib.render.CCRenderState;
+import codechicken.lib.render.pipeline.IVertexOperation;
+import codechicken.lib.vec.Cuboid6;
+import codechicken.lib.vec.Matrix4;
 import codechicken.lib.vec.Vector3;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverType;
-import eutros.coverseverywhere.client.Textures;
-import eutros.coverseverywhere.client.util.RenderHelper;
+import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.cover.CoverBehavior;
+import gregtech.api.cover.ICoverable;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ITickable;
+import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.opengl.GL11;
 
@@ -44,11 +47,39 @@ public class GregTechCover implements ICover {
 
     @Override
     public void render() {
-        // TODO figure out how the ccl thingy works
+        ICoverable coverable = tile.getCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, null);
+        if(coverable == null) return;
         Tessellator tes = Tessellator.getInstance();
         BufferBuilder buff = tes.getBuffer();
-        buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        RenderHelper.side(buff, Textures.CONVEYOR_SPRITE, tile.getPos(), side);
+        buff.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+        CCRenderState renderState = CCRenderState.instance();
+        renderState.reset();
+        renderState.bind(buff);
+        BlockPos pos = tile.getPos();
+        Matrix4 coverTranslation = new Matrix4().translate(pos.getX(), pos.getY(), pos.getZ());
+        renderState.lightMatrix.locate(coverable.getWorld(), coverable.getPos());
+        double coverPlateThickness = coverable.getCoverPlateThickness();
+        IVertexOperation[] coverPipeline = new IVertexOperation[] {renderState.lightMatrix};
+        Cuboid6 plateBox = ICoverable.getCoverPlateBox(side, coverPlateThickness);
+        for(BlockRenderLayer renderLayer : BlockRenderLayer.values()) {
+            switch(renderLayer) {
+                case SOLID:
+                    GlStateManager.disableAlpha();
+                    break;
+                case CUTOUT_MIPPED:
+                    GlStateManager.enableAlpha();
+                    break;
+                case CUTOUT:
+                    break;
+                case TRANSLUCENT:
+                    GlStateManager.enableBlend();
+                    break;
+            }
+            if(behavior.canRenderInLayer(renderLayer)) {
+                behavior.renderCover(renderState, coverTranslation.copy(), coverPipeline, plateBox, renderLayer);
+            }
+        }
+        GlStateManager.disableBlend();
         tes.draw();
     }
 

@@ -11,6 +11,7 @@ import eutros.coverseverywhere.api.ICoverType;
 import eutros.coverseverywhere.common.util.CapHelper;
 import eutros.coverseverywhere.common.util.NbtSerializableStorage;
 import eutros.coverseverywhere.common.util.NoOpStorage;
+import eutros.coverseverywhere.common.util.SingletonCapProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureMap;
@@ -43,7 +44,7 @@ import java.util.*;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
-public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHolder {
+public class CoversCapabilityProvider extends SingletonCapProvider<ICoverHolder> implements ICapabilityProvider, ICoverHolder {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final ResourceLocation NAME = new ResourceLocation(CoversEverywhere.MOD_ID, "covers");
@@ -52,20 +53,17 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
     @Nullable // null means this has been invalidated
     private TileEntity tile;
 
-    public CoversCapabilityProvider() {
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-
-    public CoversCapabilityProvider(TileEntity tile) {
-        this();
+    public CoversCapabilityProvider(@Nullable TileEntity tile) {
+        super(getApi().getHolderCapability(), ICoverHolder.class);
         this.tile = tile;
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(CoversCapabilityProvider.class);
         CapabilityManager.INSTANCE.register(ICoverHolder.class,
                 new NbtSerializableStorage<>(),
-                CoversCapabilityProvider::new);
+                () -> new CoversCapabilityProvider(null));
         CapabilityManager.INSTANCE.register(ICoverRevealer.class,
                 new NoOpStorage<>(),
                 () -> new ICoverRevealer() {
@@ -79,15 +77,13 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
 
     @Override
     public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-        return tile != null && capability == getApi().getHolderCapability();
+        return tile != null && super.hasCapability(capability, facing);
     }
 
     @Nullable
     @Override
     public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-        return tile == null ? null :
-               capability == getApi().getHolderCapability() ? getApi().getHolderCapability().cast(this) :
-               null;
+        return tile == null ? null : super.getCapability(capability, facing);
     }
 
     private static final String TYPE_TAG = "type";
@@ -234,9 +230,12 @@ public class CoversCapabilityProvider implements ICapabilityProvider, ICoverHold
         GlStateManager.pushMatrix();
         GlStateManager.translate(-tx, -ty, -tz);
         GlStateManager.disableDepth();
+        GlStateManager.enableLighting();
+        GlStateManager.color(1, 1, 1, 1);
         for(ICover cover : covers.values()) {
             if(revealer.shouldShowCover(cover)) cover.render();
         }
+        GlStateManager.disableLighting();
         GlStateManager.enableDepth();
         GlStateManager.popMatrix();
     }
