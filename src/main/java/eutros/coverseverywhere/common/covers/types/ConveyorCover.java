@@ -107,11 +107,6 @@ public class ConveyorCover implements ICover {
             return new ConveyorCover(tile, side);
         }
 
-        @Override
-        public boolean shouldShowCover(ICover cover) {
-            return cover.getType() == TYPE;
-        }
-
     }
 
     public static class Type extends AbstractCoverType {

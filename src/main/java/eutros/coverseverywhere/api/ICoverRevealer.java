@@ -12,10 +12,6 @@ import net.minecraftforge.common.capabilities.Capability;
  */
 public interface ICoverRevealer {
 
-    default boolean shouldShowCover(ICover cover) {
-        return true;
-    }
-
     default boolean shouldShowGrid() {
         return true;
     }

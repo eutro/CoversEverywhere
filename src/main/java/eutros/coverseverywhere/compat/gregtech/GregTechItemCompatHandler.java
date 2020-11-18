@@ -68,11 +68,6 @@ public class GregTechItemCompatHandler {
                 return false;
             }
 
-            @Override
-            public boolean shouldShowCover(ICover cover) {
-                return cover.getType() == GregTechCoverType.INSTANCE;
-            }
-
         }
 
         private static class GregTechCapabilityProvider extends SingletonCapProvider<ICoverRevealer> {
