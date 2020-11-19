@@ -47,8 +47,10 @@ public class CoversCapabilityProvider extends SingletonCapProvider<ICoverHolder>
 
     public CoversCapabilityProvider(@Nullable TileEntity tile) {
         super(getApi().getHolderCapability(), ICoverHolder.class);
-        this.tile = tile;
-        CoversFunctionHandler.register(this);
+        if(tile != null) {
+            CoversFunctionHandler.register(this);
+            this.tile = tile;
+        }
     }
 
     public static void init() {
