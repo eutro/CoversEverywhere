@@ -1,9 +1,12 @@
 package eutros.coverseverywhere.api;
 
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -49,10 +52,17 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
     List<ItemStack> getDrops();
 
     /**
-     * Called each frame to render the cover at its position.
+     * Called to render the cover.
+     * You MUST use the provided vertex builder.
+     * THE BUFFER IS ALREADY DRAWING!
+     * The format is {@link DefaultVertexFormats#BLOCK}.
+     *
+     * Make sure to check the {@link MinecraftForgeClient#getRenderLayer()}
+     *
+     * @param bufferBuilder the builder to
      */
     @SideOnly(Side.CLIENT)
-    void render();
+    void render(BufferBuilder bufferBuilder);
 
     /**
      * Configure this cover, called when the cover is activated with a screwdriver.

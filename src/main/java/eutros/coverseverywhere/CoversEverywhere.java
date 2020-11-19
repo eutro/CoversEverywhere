@@ -2,6 +2,7 @@ package eutros.coverseverywhere;
 
 import eutros.coverseverywhere.common.covers.Covers;
 import eutros.coverseverywhere.common.covers.CoversCapabilityProvider;
+import eutros.coverseverywhere.common.covers.CoversFunctionHandler;
 import eutros.coverseverywhere.common.items.ModItems;
 import eutros.coverseverywhere.compat.gregtech.GTCECompat;
 import net.minecraftforge.fml.common.Mod;
@@ -19,11 +20,12 @@ public class CoversEverywhere {
     public CoversEverywhere() {
         Covers.init();
         ModItems.init();
+        CoversFunctionHandler.init();
         GTCECompat.check();
     }
 
     @Mod.EventHandler
-    public void init(FMLPreInitializationEvent event) {
+    public void preInit(FMLPreInitializationEvent event) {
         CoversCapabilityProvider.init();
     }
 

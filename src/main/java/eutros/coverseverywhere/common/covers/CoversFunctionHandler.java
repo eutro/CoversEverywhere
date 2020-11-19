@@ -2,22 +2,28 @@ package eutros.coverseverywhere.common.covers;
 
 import eutros.coverseverywhere.api.ICover;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.opengl.GL11;
 
 import java.util.*;
 
 public class CoversFunctionHandler {
 
     private static final ThreadLocal<Set<ICoverFunction>> providers =
-            ThreadLocal.withInitial(() -> Collections.newSetFromMap(new WeakHashMap<>()));
+            ThreadLocal.withInitial(() -> Collections.newSetFromMap(Collections.synchronizedMap(new WeakHashMap<>())));
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(CoversFunctionHandler.class);
@@ -28,7 +34,6 @@ public class CoversFunctionHandler {
     }
 
     private static void destroy(ICoverFunction provider) {
-        providers.get().remove(provider);
         if(provider.getTile() != null) {
             for(EnumFacing side : EnumFacing.values()) {
                 Collection<ICover> covers = provider.get(side);
@@ -42,24 +47,26 @@ public class CoversFunctionHandler {
         }
     }
 
-    private static boolean checkValid(ICoverFunction provider) {
-        TileEntity tile = provider.getTile();
-        if(tile == null || tile.isInvalid()) {
-            destroy(provider);
-            return false;
+    private static void clearInvalid() {
+        Iterator<ICoverFunction> it = providers.get().iterator();
+        while(it.hasNext()) {
+            ICoverFunction provider = it.next();
+            TileEntity tile = provider.getTile();
+            if(tile == null || tile.isInvalid()) {
+                destroy(provider);
+                it.remove();
+            }
         }
-        return true;
     }
 
     @SubscribeEvent
     public static void tick(TickEvent.WorldTickEvent event) {
         if(event.phase == TickEvent.Phase.END) {
+            clearInvalid();
             for(ICoverFunction provider : providers.get()) {
-                if(checkValid(provider)) {
-                    for(EnumFacing side : EnumFacing.values()) {
-                        for(ICover cover : provider.get(side)) {
-                            cover.tick();
-                        }
+                for(EnumFacing side : EnumFacing.values()) {
+                    for(ICover cover : provider.get(side)) {
+                        cover.tick();
                     }
                 }
             }
@@ -87,15 +94,21 @@ public class CoversFunctionHandler {
         GlStateManager.pushMatrix();
         GlStateManager.translate(-tx, -ty, -tz);
 
+        ForgeHooksClient.setRenderLayer(BlockRenderLayer.CUTOUT);
+        Tessellator tes = Tessellator.getInstance();
+        BufferBuilder buff = tes.getBuffer();
+        buff.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+
+        clearInvalid();
         for(ICoverFunction provider : providers.get()) {
-            if(checkValid(provider)) {
-                for(EnumFacing side : EnumFacing.values()) {
-                    for(ICover cover : provider.get(side)) {
-                        cover.render();
-                    }
+            for(EnumFacing side : EnumFacing.values()) {
+                for(ICover cover : provider.get(side)) {
+                    cover.render(buff);
                 }
             }
         }
+
+        tes.draw();
 
         GlStateManager.popMatrix();
 

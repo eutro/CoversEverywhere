@@ -8,21 +8,20 @@ import eutros.coverseverywhere.api.ICoverType;
 import eutros.coverseverywhere.client.Textures;
 import eutros.coverseverywhere.client.util.RenderHelper;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import org.lwjgl.opengl.GL11;
 
 import java.util.Collections;
 import java.util.List;
@@ -82,12 +81,10 @@ public class ConveyorCover implements ICover {
 
     @SideOnly(Side.CLIENT)
     @Override
-    public void render() {
-        Tessellator tes = Tessellator.getInstance();
-        BufferBuilder buff = tes.getBuffer();
-        buff.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        RenderHelper.side(buff, Textures.CONVEYOR_SPRITE, tile.getPos(), side);
-        tes.draw();
+    public void render(BufferBuilder buff) {
+        if(MinecraftForgeClient.getRenderLayer() == BlockRenderLayer.CUTOUT) {
+            RenderHelper.side(buff, Textures.CONVEYOR_SPRITE, tile.getPos(), side);
+        }
     }
 
     @Override

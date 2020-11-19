@@ -12,10 +12,8 @@ import eutros.coverseverywhere.api.ICoverType;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.cover.CoverBehavior;
 import gregtech.api.cover.ICoverable;
+import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -24,7 +22,7 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import org.lwjgl.opengl.GL11;
+import net.minecraftforge.client.MinecraftForgeClient;
 
 import java.util.List;
 
@@ -45,13 +43,13 @@ public class GregTechCover implements ICover {
         return GregTechCoverType.INSTANCE;
     }
 
+    /**
+     * @see MetaTileEntity#renderCovers(CCRenderState, Matrix4, BlockRenderLayer)
+     */
     @Override
-    public void render() {
+    public void render(BufferBuilder buff) {
         ICoverable coverable = tile.getCapability(GregtechTileCapabilities.CAPABILITY_COVERABLE, null);
         if(coverable == null) return;
-        Tessellator tes = Tessellator.getInstance();
-        BufferBuilder buff = tes.getBuffer();
-        buff.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
         CCRenderState renderState = CCRenderState.instance();
         renderState.reset();
         renderState.bind(buff);
@@ -59,28 +57,16 @@ public class GregTechCover implements ICover {
         Matrix4 coverTranslation = new Matrix4().translate(pos.getX(), pos.getY(), pos.getZ());
         renderState.lightMatrix.locate(coverable.getWorld(), coverable.getPos());
         double coverPlateThickness = coverable.getCoverPlateThickness();
-        IVertexOperation[] coverPipeline = new IVertexOperation[] {renderState.lightMatrix};
-        Cuboid6 plateBox = ICoverable.getCoverPlateBox(side, coverPlateThickness);
-        for(BlockRenderLayer renderLayer : BlockRenderLayer.values()) {
-            switch(renderLayer) {
-                case SOLID:
-                    GlStateManager.disableAlpha();
-                    break;
-                case CUTOUT_MIPPED:
-                    GlStateManager.enableAlpha();
-                    break;
-                case CUTOUT:
-                    break;
-                case TRANSLUCENT:
-                    GlStateManager.enableBlend();
-                    break;
-            }
-            if(behavior.canRenderInLayer(renderLayer)) {
-                behavior.renderCover(renderState, coverTranslation.copy(), coverPipeline, plateBox, renderLayer);
-            }
+        IVertexOperation[] coverPipeline = {renderState.lightMatrix};
+        Cuboid6 plateBox = ICoverable.getCoverPlateBox(side, coverPlateThickness)
+                .expand(side.getAxis() == EnumFacing.Axis.X ? 0.01 : 0,
+                        side.getAxis() == EnumFacing.Axis.Y ? 0.01 : 0,
+                        side.getAxis() == EnumFacing.Axis.Z ? 0.01 : 0);
+
+        BlockRenderLayer renderLayer = MinecraftForgeClient.getRenderLayer();
+        if(behavior.canRenderInLayer(renderLayer)) {
+            behavior.renderCover(renderState, coverTranslation.copy(), coverPipeline, plateBox, renderLayer);
         }
-        GlStateManager.disableBlend();
-        tes.draw();
     }
 
     @Override

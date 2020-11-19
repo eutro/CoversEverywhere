@@ -60,7 +60,6 @@ public class CoversCapabilityProvider extends SingletonCapProvider<ICoverHolder>
                 new NoOpStorage<>(),
                 () -> new ICoverRevealer() {
                 });
-        CoversFunctionHandler.init();
     }
 
     @SubscribeEvent
