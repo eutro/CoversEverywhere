@@ -3,15 +3,11 @@ package eutros.coverseverywhere.api;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
-import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import java.util.List;
 
 /**
  * A cover instance that is to be on a tile entity.
@@ -42,14 +38,10 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
 
     /**
      * Called when the cover is removed.
+     *
+     * Covers are responsible for their own drops.
      */
-    default void onRemoved() {
-    }
-
-    /**
-     * @return The list of stacks to drop when the cover is removed.
-     */
-    List<ItemStack> getDrops();
+    void onRemoved();
 
     /**
      * Called to render the cover.
@@ -57,9 +49,7 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
      * THE BUFFER IS ALREADY DRAWING!
      * The format is {@link DefaultVertexFormats#BLOCK}.
      *
-     * Make sure to check the {@link MinecraftForgeClient#getRenderLayer()}
-     *
-     * @param bufferBuilder the builder to
+     * @param bufferBuilder The builder to put vertices into.
      */
     @SideOnly(Side.CLIENT)
     void render(BufferBuilder bufferBuilder);

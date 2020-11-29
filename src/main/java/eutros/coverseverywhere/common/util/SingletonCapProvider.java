@@ -9,17 +9,12 @@ import javax.annotation.Nullable;
 
 public class SingletonCapProvider<C> implements ICapabilityProvider {
 
-    private final Capability<C> target;
+    private final Capability<? super C> target;
     private final C implementation;
 
-    public SingletonCapProvider(Capability<C> target, C implementation) {
+    public SingletonCapProvider(Capability<? super C> target, C implementation) {
         this.target = target;
         this.implementation = implementation;
-    }
-
-    public SingletonCapProvider(Capability<C> target, Class<C> targetClass) {
-        this.target = target;
-        this.implementation = targetClass.cast(this);
     }
 
     @Override
@@ -30,7 +25,11 @@ public class SingletonCapProvider<C> implements ICapabilityProvider {
     @Nullable
     @Override
     public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-        return capability == target ? target.cast(implementation) : null;
+        return capability == target ? target.cast(getImplementation()) : null;
+    }
+
+    protected C getImplementation() {
+        return implementation;
     }
 
 }

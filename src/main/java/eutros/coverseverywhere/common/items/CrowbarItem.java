@@ -37,7 +37,6 @@ public class CrowbarItem extends Item implements ICoverRevealer {
         Collection<ICover> covers = holder.get(side);
         for(ICover cover : covers) {
             cover.onRemoved();
-            holder.drop(side, cover);
         }
         covers.clear();
         tile.markDirty();

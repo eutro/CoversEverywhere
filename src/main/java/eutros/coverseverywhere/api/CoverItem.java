@@ -34,7 +34,7 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
         ICover cover = makeCover(tile, player, hand, side);
         if(cover == null) return EnumActionResult.PASS;
 
-        holder.put(side, cover);
+        holder.get(side).add(cover);
         tile.markDirty();
         consumeOne(player, hand);
         return EnumActionResult.SUCCESS;

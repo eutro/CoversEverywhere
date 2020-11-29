@@ -13,6 +13,7 @@ import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.cover.CoverBehavior;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.metatileentity.MetaTileEntity;
+import net.minecraft.block.Block;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -22,9 +23,6 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.client.MinecraftForgeClient;
-
-import java.util.List;
 
 public class GregTechCover implements ICover {
 
@@ -63,15 +61,7 @@ public class GregTechCover implements ICover {
                         side.getAxis() == EnumFacing.Axis.Y ? 0.01 : 0,
                         side.getAxis() == EnumFacing.Axis.Z ? 0.01 : 0);
 
-        BlockRenderLayer renderLayer = MinecraftForgeClient.getRenderLayer();
-        if(behavior.canRenderInLayer(renderLayer)) {
-            behavior.renderCover(renderState, coverTranslation.copy(), coverPipeline, plateBox, renderLayer);
-        }
-    }
-
-    @Override
-    public List<ItemStack> getDrops() {
-        return behavior.getDrops();
+        behavior.renderCover(renderState, coverTranslation.copy(), coverPipeline, plateBox, BlockRenderLayer.CUTOUT);
     }
 
     @Override
@@ -104,6 +94,9 @@ public class GregTechCover implements ICover {
     @Override
     public void onRemoved() {
         behavior.onRemoved();
+        for(ItemStack stack : behavior.getDrops()) {
+            Block.spawnAsEntity(tile.getWorld(), tile.getPos(), stack);
+        }
     }
 
     public CoverBehavior getBehaviour() {

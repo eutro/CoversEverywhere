@@ -128,7 +128,7 @@ class TileWrapper implements ICoverable {
                 CoverBehavior behaviour = definition.createCoverBehavior(this, side);
                 behaviour.readInitialSyncData(buf);
                 ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
-                if(holder != null) holder.put(side, new GregTechCover(behaviour, tile, side));
+                if(holder != null) holder.get(side).add(new GregTechCover(behaviour, tile, side));
                 break;
             }
             case 1: {
@@ -202,7 +202,7 @@ class TileWrapper implements ICoverable {
             buf.writeVarInt(CoverDefinition.getNetworkIdForCover(coverDefinition));
             coverBehavior.writeInitialSyncData(buf);
         });
-        holder.put(side, new GregTechCover(coverBehavior, tile, side));
+        holder.get(side).add(new GregTechCover(coverBehavior, tile, side));
         tile.markDirty();
         return true;
     }
@@ -220,7 +220,6 @@ class TileWrapper implements ICoverable {
                 tile.markDirty();
                 sendToClients(2, buf -> buf.writeByte(side.getIndex()));
                 cover.onRemoved();
-                holder.drop(side, cover);
                 return true;
             }
         }

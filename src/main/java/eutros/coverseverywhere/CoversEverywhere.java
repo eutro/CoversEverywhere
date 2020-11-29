@@ -1,10 +1,12 @@
 package eutros.coverseverywhere;
 
 import eutros.coverseverywhere.common.covers.Covers;
-import eutros.coverseverywhere.common.covers.CoversCapabilityProvider;
-import eutros.coverseverywhere.common.covers.CoversFunctionHandler;
+import eutros.coverseverywhere.common.covers.impl.CoverRenderer;
+import eutros.coverseverywhere.common.covers.impl.CoverTicker;
+import eutros.coverseverywhere.common.covers.impl.CoversCapabilityProvider;
 import eutros.coverseverywhere.common.items.ModItems;
 import eutros.coverseverywhere.compat.gregtech.GTCECompat;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
@@ -20,13 +22,14 @@ public class CoversEverywhere {
     public CoversEverywhere() {
         Covers.init();
         ModItems.init();
-        CoversFunctionHandler.init();
         GTCECompat.check();
     }
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         CoversCapabilityProvider.init();
+        CoverTicker.init();
+        if(FMLCommonHandler.instance().getSide().isClient()) CoverRenderer.init();
     }
 
 }
