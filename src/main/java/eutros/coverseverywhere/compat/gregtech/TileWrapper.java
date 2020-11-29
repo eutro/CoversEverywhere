@@ -219,7 +219,6 @@ class TileWrapper implements ICoverable {
                 it.remove();
                 tile.markDirty();
                 sendToClients(2, buf -> buf.writeByte(side.getIndex()));
-                cover.onRemoved();
                 return true;
             }
         }
