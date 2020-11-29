@@ -13,6 +13,8 @@ import javax.annotation.Nullable;
 
 /**
  * An item that can be used as a cover, showing the grid and any placed covers.
+ *
+ * You don't have to extend this class, other implementations are possible, if you wish.
  */
 public abstract class CoverItem extends Item implements ICoverRevealer {
 
@@ -20,7 +22,7 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
      * Called when a Block is right-clicked with this Item.
      *
      * Places the cover based on the selected {@link GridSection}.
-     * The stack then is then partially consumed as by {@link #consumeOne(EntityPlayer, EnumHand)}.
+     * The stack is then partially consumed as by {@link #consumeOne(EntityPlayer, EnumHand)}.
      */
     @Override
     public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {

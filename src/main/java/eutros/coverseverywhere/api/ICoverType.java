@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 
 /**
  * The type of a cover, used primarily for deserialization.
- * Only one of each cover type can be on a given side of a tile entity.
  *
  * These should be registered with {@link IForgeRegistry#register(IForgeRegistryEntry)}.
  */
