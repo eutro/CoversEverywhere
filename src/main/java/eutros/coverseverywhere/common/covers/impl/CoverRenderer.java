@@ -1,7 +1,6 @@
 package eutros.coverseverywhere.common.covers.impl;
 
 import eutros.coverseverywhere.api.ICover;
-import eutros.coverseverywhere.api.ICoverHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GLAllocation;
@@ -10,7 +9,6 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -49,13 +47,7 @@ public class CoverRenderer {
         BufferBuilder buff = tes.getBuffer();
         buff.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 
-        for(ICoverHolder holder : CoverManager.get(Minecraft.getMinecraft().world).getHolders()) {
-            for(EnumFacing side : EnumFacing.values()) {
-                for(ICover cover : holder.get(side)) {
-                    cover.render(buff);
-                }
-            }
-        }
+        for(ICover cover : CoverManager.get(Minecraft.getMinecraft().world).getCovers()) cover.render(buff);
 
         tes.draw();
 
@@ -81,8 +73,10 @@ public class CoverRenderer {
     @SubscribeEvent
     public static void render(RenderWorldLastEvent event) {
         Minecraft mc = Minecraft.getMinecraft();
-        if(listening.add(mc.world)) CoverManager.get(mc.world).onDirty(CoverRenderer::onDirty);
-        CoverManager.pollDirty(mc.world);
+
+        CoverManager manager = CoverManager.get(mc.world);
+        if(listening.add(mc.world)) manager.onDirty(CoverRenderer::onDirty);
+        manager.poll();
 
         if(getRenderCache() == -1) refreshRenderCache();
 

@@ -17,88 +17,17 @@ import net.minecraftforge.common.util.INBTSerializable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
 public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompound> {
 
-    private final Multimap<EnumFacing, ICover> covers = Multimaps.newSetMultimap(
-            new LinkedHashMap<>(),
-            () -> new LinkedHashSet<ICover>() {
-                @Override
-                public boolean add(ICover cover) {
-                    if(super.add(cover)) {
-                        CoverManager.get(tile.getWorld()).markDirty();
-                        return true;
-                    }
-                    return false;
-                }
-
-                @Override
-                public boolean remove(Object o) {
-                    if(super.remove(o)) {
-                        ((ICover) o).onRemoved();
-                        CoverManager.get(tile.getWorld()).markDirty();
-                        return true;
-                    }
-                    return false;
-                }
-
-                @Override
-                public void clear() {
-                    if(!isEmpty()) {
-                        LinkedList<ICover> covers = new LinkedList<>(this);
-                        super.clear();
-                        for(ICover cover : covers) cover.onRemoved();
-                        CoverManager.get(tile.getWorld()).markDirty();
-                    }
-                }
-
-                @Override
-                public Iterator<ICover> iterator() {
-                    Iterator<ICover> delegate = super.iterator();
-                    return new Iterator<ICover>() {
-                        private ICover current;
-
-                        @Override
-                        public boolean hasNext() {
-                            return delegate.hasNext();
-                        }
-
-                        @Override
-                        public void remove() {
-                            delegate.remove();
-                            if(current != null) {
-                                current.onRemoved();
-                                CoverManager.get(tile.getWorld()).markDirty();
-                            }
-                        }
-
-                        @Override
-                        public ICover next() {
-                            return current = delegate.next();
-                        }
-                    };
-                }
-            });
-
-    @Nullable // null means this has been invalidated
     private TileEntity tile;
+    private final Multimap<EnumFacing, ICover> covers = Multimaps.newSetMultimap(new EnumMap<>(EnumFacing.class), CoverSet::new);
 
-    @Nullable
-    TileEntity getTile() {
-        return tile;
-    }
-
-    void invalidate() {
-        tile = null;
-    }
-
-    public CoverHolder(@Nullable TileEntity tile) {
+    public CoverHolder(TileEntity tile) {
         this.tile = tile;
-        if(tile != null) CoverManager.get(null).register(this);
     }
 
     private static final String TYPE_TAG = "type";
@@ -107,10 +36,9 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
     @Override
     public NBTTagCompound serializeNBT() {
         NBTTagCompound nbt = new NBTTagCompound();
-        if(tile == null) return nbt;
 
         for(EnumFacing side : EnumFacing.values()) {
-            Collection<ICover> sideCovers = covers.get(side);
+            Collection<ICover> sideCovers = get(side);
             if(sideCovers.isEmpty()) continue;
 
             NBTTagList sideNbt = new NBTTagList();
@@ -134,7 +62,6 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
 
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
-        if(tile == null) return;
         covers.clear();
         for(String key : nbt.getKeySet()) {
             EnumFacing side = EnumFacing.byName(key);
@@ -157,6 +84,97 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
     @Override
     public Collection<ICover> get(EnumFacing side) {
         return covers.get(side);
+    }
+
+    private CoverManager manager = null;
+
+    void setManager(CoverManager manager) {
+        this.manager = manager;
+    }
+
+    public TileEntity getTile() {
+        return tile;
+    }
+
+    boolean checkInvalid() {
+        if (covers.isEmpty()) {
+            manager = null;
+            return true;
+        }
+        return tile.isInvalid();
+    }
+
+    private void onAddition() {
+        if(manager == null) {
+            manager = CoverManager.get(tile.getWorld());
+            manager.register(this);
+        } else {
+            manager.markDirty();
+        }
+    }
+
+    private void onRemoval() {
+        manager.markDirty();
+    }
+
+    private class CoverSet extends LinkedHashSet<ICover> {
+
+        @Override
+        public boolean add(ICover cover) {
+            if(super.add(cover)) {
+                onAddition();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            if(super.remove(o)) {
+                ((ICover) o).onRemoved();
+                onRemoval();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void clear() {
+            if(!isEmpty()) {
+                LinkedList<ICover> covers = new LinkedList<>(this);
+                super.clear();
+                for(ICover cover : covers) cover.onRemoved();
+                onRemoval();
+            }
+        }
+
+        @Override
+        public Iterator<ICover> iterator() {
+            Iterator<ICover> delegate = super.iterator();
+            return new Iterator<ICover>() {
+                private ICover current;
+
+                @Override
+                public boolean hasNext() {
+                    return delegate.hasNext();
+                }
+
+                @Override
+                public void remove() {
+                    delegate.remove();
+                    if(current != null) {
+                        current.onRemoved();
+                        onRemoval();
+                    }
+                }
+
+                @Override
+                public ICover next() {
+                    return current = delegate.next();
+                }
+            };
+        }
+
     }
 
 }
