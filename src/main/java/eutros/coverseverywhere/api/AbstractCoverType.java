@@ -6,6 +6,8 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 /**
  * An abstract class implementing {@link ICoverType} by extending {@link IForgeRegistryEntry.Impl} for
  * its implementation of {@link IForgeRegistryEntry}.
+ *
+ * This only exists for convenience, there's nothing important in this that you couldn't implement yourself.
  */
 public abstract class AbstractCoverType
         extends IForgeRegistryEntry.Impl<ICoverType>
@@ -34,6 +36,11 @@ public abstract class AbstractCoverType
      * A constructor that does not set the registry name when constructed.
      */
     protected AbstractCoverType() {
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" + getRegistryName() + "}";
     }
 
 }

@@ -4,6 +4,26 @@ import net.minecraft.util.EnumFacing;
 
 /**
  * An enum of the sections that are shown on the grid revealed by {@link ICoverRevealer}.
+ *
+ * Covers Everywhere may display a grid on the faces of the selected block, if the player is holding a
+ * suitable {@link ICoverRevealer cover revealer}. This grid is what Covers Everywhere items use
+ * to decide which face of the block to affect.
+ *
+ * The grid looks like such:
+ *
+ *  CORNER |   UP   |   UP   | CORNER
+ * -----------------------------------
+ *   LEFT  | CENTER | CENTER | RIGHT
+ * -----------------------------------
+ *   LEFT  | CENTER | CENTER | RIGHT
+ * -----------------------------------
+ *  CORNER |  DOWN  |  DOWN  | CORNER
+ *
+ *  CORNER means the opposite side should be selected,
+ *  UP means the top side should be selected, or north when on the top/bottom side.
+ *  DOWN means the bottom side should be selected, or south when on the top/bottom side.
+ *  LEFT means the side to the left should be selected, or west when on the top/bottom side.
+ *  RIGHT means the side to the right should be selected, or east when on the top/bottom side.
  */
 public enum GridSection {
     UP,
@@ -14,6 +34,14 @@ public enum GridSection {
     CENTER,
     ;
 
+    /**
+     * Offset the given side with this grid section.
+     *
+     * When a side is selected with the grid, this is used to get the side that should be affected.
+     *
+     * @param side The side the grid is on.
+     * @return The side that should be affected.
+     */
     public EnumFacing offset(EnumFacing side) {
         switch(this) {
             case UP:
