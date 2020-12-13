@@ -22,18 +22,20 @@ public class CoverManager {
 
     private static void redistributeNull() {
         if(!INSTANCES.containsKey(null)) return;
-        CoverManager nullHolder = getFor(null);
-        Iterator<CoverHolder> it = nullHolder.holders.iterator();
+        CoverManager nullManager = getFor(null);
+        Iterator<CoverHolder> it = nullManager.holders.iterator();
         while(it.hasNext()) {
             CoverHolder holder = it.next();
             World world = holder.getTile().getWorld();
             //noinspection ConstantConditions we wouldn't be here in the first place
             if(world != null) {
                 it.remove();
-                getFor(world).register(holder);
+                CoverManager newManager = getFor(world);
+                newManager.register(holder);
+                holder.setManager(newManager);
             }
         }
-        if(nullHolder.holders.isEmpty()) INSTANCES.remove(null);
+        if(nullManager.holders.isEmpty()) INSTANCES.remove(null);
     }
 
     private Set<CoverHolder> holders = Collections.newSetFromMap(new WeakHashMap<>());
