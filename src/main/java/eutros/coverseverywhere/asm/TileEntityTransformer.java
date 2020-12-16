@@ -29,7 +29,7 @@ public class TileEntityTransformer extends ClassVisitor implements Opcodes {
         // there's no way of knowing whether a class is a tile entity when transforming so check that here.
         if(!(self instanceof TileEntity)) return toWrap; // I'm so sorry
         if(capability == getApi().getHolderCapability()) return toWrap;
-        if(getImplClass(self.getClass()) == calling) return toWrap;
+        if(getImplClass(self.getClass(), getImplCache, "getCapability") != calling) return toWrap;
         return doWrap(toWrap, (TileEntity) self, capability, facing);
     }
 
@@ -39,9 +39,13 @@ public class TileEntityTransformer extends ClassVisitor implements Opcodes {
                                             @Nonnull Class<?> calling) {
         if(!(self instanceof TileEntity)) return toWrap;
         if(capability == getApi().getHolderCapability()) return toWrap;
-        if(getImplClass(self.getClass()) == calling) return toWrap;
+        if(getImplClass(self.getClass(), hasImplCache, "hasCapability") != calling) return toWrap;
         return doWrapHas(toWrap, (TileEntity) self, capability, facing);
     }
+
+    private static Map<Class<?>, Class<?>> getImplCache = new WeakHashMap<>();
+
+    private static Map<Class<?>, Class<?>> hasImplCache = new WeakHashMap<>();
 
     @Nullable
     private static <T> T doWrap(@Nullable T toWrap, @Nonnull TileEntity self,
@@ -65,13 +69,11 @@ public class TileEntityTransformer extends ClassVisitor implements Opcodes {
         return toWrap;
     }
 
-    private static Map<Class<?>, Class<?>> implCache = new WeakHashMap<>();
-
-    private static Class<?> getImplClass(Class<?> clazz) {
+    private static Class<?> getImplClass(Class<?> clazz, Map<Class<?>, Class<?>> implCache, String name) {
         Class<?> impl = implCache.get(clazz);
         if(impl != null) return impl;
         try {
-            impl = clazz.getMethod("getCapability", Capability.class, EnumFacing.class)
+            impl = clazz.getMethod(name, Capability.class, EnumFacing.class)
                     .getDeclaringClass();
         } catch(NoSuchMethodException e) {
             impl = Object.class;
@@ -136,13 +138,14 @@ public class TileEntityTransformer extends ClassVisitor implements Opcodes {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        // <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing);
-        if(GET_CAPABILITY_METHOD.getName().equals(name) &&
-                GET_CAPABILITY_METHOD.getDescriptor().equals(desc)) {
-            return new GetCapabilityTransformer(mv);
-        } else if(HAS_CAPABILITY_METHOD.getName().equals(name) &&
-                HAS_CAPABILITY_METHOD.getDescriptor().equals(desc)) {
-            return new HasCapabilityTransformer(mv);
+        if ((access & ACC_STATIC) == 0) {
+            if(GET_CAPABILITY_METHOD.getName().equals(name) &&
+                    GET_CAPABILITY_METHOD.getDescriptor().equals(desc)) {
+                return new GetCapabilityTransformer(mv);
+            } else if(HAS_CAPABILITY_METHOD.getName().equals(name) &&
+                    HAS_CAPABILITY_METHOD.getDescriptor().equals(desc)) {
+                return new HasCapabilityTransformer(mv);
+            }
         }
         return mv;
     }
