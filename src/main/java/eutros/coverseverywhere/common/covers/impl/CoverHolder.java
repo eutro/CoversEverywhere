@@ -104,7 +104,7 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
         return tile.isInvalid();
     }
 
-    private void onAddition() {
+    void onAddition() {
         if(manager == null) {
             manager = CoverManager.get(tile.getWorld());
             manager.register(this);
@@ -113,7 +113,7 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
         }
     }
 
-    private void onRemoval() {
+    void onRemoval() {
         manager.markDirty();
     }
 

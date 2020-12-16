@@ -23,6 +23,9 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.common.capabilities.Capability;
+
+import javax.annotation.Nullable;
 
 public class GregTechCover implements ICover {
 
@@ -97,6 +100,21 @@ public class GregTechCover implements ICover {
         for(ItemStack stack : behavior.getDrops()) {
             Block.spawnAsEntity(tile.getWorld(), tile.getPos(), stack);
         }
+    }
+
+    @Nullable
+    @Override
+    public <T> T wrapCapability(@Nullable T toWrap, Capability<T> capability) {
+        return behavior.getCapability(capability, toWrap);
+    }
+
+    @Override
+    public <T> boolean wrapHasCapability(boolean hadBefore, Capability<T> capability) {
+        if (hadBefore) {
+            // I sure do hope this works
+            return wrapCapability(capability.getDefaultInstance(), capability) != null;
+        }
+        return false;
     }
 
     public CoverBehavior getBehaviour() {

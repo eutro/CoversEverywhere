@@ -5,9 +5,13 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
 
 /**
  * A cover instance that is to be on a tile entity.
@@ -63,6 +67,35 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
      */
     default boolean configure(EntityPlayer player, EnumHand hand, float hitX, float hitY, float hitZ) {
         return false;
+    }
+
+    /**
+     * Override a capability that the tile entity may have.
+     *
+     * If you are modifying availability (e.g. returning null when toWrap is non-null) in any way you MUST override
+     * hasCapability too.
+     *
+     * @param toWrap The capability instance to wrap. Null if the tile entity does not have the given capability.
+     * @param capability The capability object that is being looked for.
+     * @param <T> The type of the capability.
+     * @return The wrapped capability, or {@param toWrap} if no wrapping was done.
+     */
+    @Nullable
+    default <T> T wrapCapability(@Nullable T toWrap, Capability<T> capability) {
+        return toWrap;
+    }
+
+    /**
+     * Override the presence of a capability that the tile entity may have.
+     *
+     * This is necessary to keep with the contract of {@link ICapabilityProvider}.
+     *
+     * @param hadBefore Whether the capability is already present.
+     * @param capability The capability object.
+     * @return Whether the capability object will be present after {@link #wrapCapability(Object, Capability)} is called.
+     */
+    default <T> boolean wrapHasCapability(boolean hadBefore, Capability<T> capability) {
+        return hadBefore;
     }
 
 }
