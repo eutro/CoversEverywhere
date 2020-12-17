@@ -12,15 +12,18 @@ public class CoversEverywhereClassTransformer implements IClassTransformer {
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
-        if (name.startsWith("eutros.coverseverywhere.asm")) return basicClass;
-        ClassReader cr = new ClassReader(basicClass);
-        ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
         try {
-            cr.accept(new TileEntityTransformer(cw, transformedName.replace('.', '/')), 0);
+            if(basicClass != null) {
+                ClassReader cr = new ClassReader(basicClass);
+                ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+                cr.accept(new TileEntityTransformer(cw, transformedName.replace('.', '/')), 0);
+                return cw.toByteArray();
+            }
         } catch(Throwable t) {
+            // Forge doesn't give a stack trace if it catches, so good luck debugging in prod!
             LOGGER.error("Error transforming {}", transformedName, t);
         }
-        return cw.toByteArray();
+        return basicClass;
     }
 
 }
