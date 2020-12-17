@@ -13,8 +13,8 @@ import org.objectweb.asm.commons.Method;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
@@ -23,29 +23,31 @@ public class TileEntityTransformer extends ClassVisitor implements Opcodes {
     // called from transformed methods
     @Nullable
     @SuppressWarnings("unused")
-    public static <T> T wrapCapability(@Nullable T toWrap, @Nonnull Object self,
-                                       @Nonnull Capability<T> capability, @Nullable EnumFacing facing,
-                                       @Nonnull Class<?> calling) {
+    public static <T> T getCapabilityWrapped(@Nullable T toWrap, @Nonnull Object self,
+                                             @Nonnull Capability<T> capability, @Nullable EnumFacing facing,
+                                             @Nonnull Class<?> calling) {
         // there's no way of knowing whether a class is a tile entity when transforming so check that here.
-        if(!(self instanceof TileEntity)) return toWrap; // I'm so sorry
-        if(capability == getApi().getHolderCapability()) return toWrap;
-        if(getImplClass(self.getClass(), getImplCache, "getCapability") != calling) return toWrap;
-        return doWrap(toWrap, (TileEntity) self, capability, facing);
+        if(shouldWrap(self, capability, TransformedMethod.GET, calling)) {
+            return doWrap(toWrap, (TileEntity) self, capability, facing);
+        }
+        return toWrap;
     }
 
     @SuppressWarnings("unused")
-    public static boolean wrapHasCapability(boolean toWrap, @Nonnull Object self,
-                                            @Nonnull Capability<?> capability, @Nullable EnumFacing facing,
-                                            @Nonnull Class<?> calling) {
-        if(!(self instanceof TileEntity)) return toWrap;
-        if(capability == getApi().getHolderCapability()) return toWrap;
-        if(getImplClass(self.getClass(), hasImplCache, "hasCapability") != calling) return toWrap;
-        return doWrapHas(toWrap, (TileEntity) self, capability, facing);
+    public static boolean hasCapabilityWrapped(boolean toWrap, @Nonnull Object self,
+                                               @Nonnull Capability<?> capability, @Nullable EnumFacing facing,
+                                               @Nonnull Class<?> calling) {
+        if(shouldWrap(self, capability, TransformedMethod.HAS, calling)) {
+            return doWrapHas(toWrap, (TileEntity) self, capability, facing);
+        }
+        return toWrap;
     }
 
-    private static Map<Class<?>, Class<?>> getImplCache = new WeakHashMap<>();
-
-    private static Map<Class<?>, Class<?>> hasImplCache = new WeakHashMap<>();
+    private static boolean shouldWrap(Object self, Capability<?> capability, TransformedMethod method, Class<?> calling) {
+        return self instanceof TileEntity &&
+                capability != getApi().getHolderCapability() &&
+                method.getImplementingFor(self.getClass()) == calling;
+    }
 
     @Nullable
     private static <T> T doWrap(@Nullable T toWrap, @Nonnull TileEntity self,
@@ -69,129 +71,115 @@ public class TileEntityTransformer extends ClassVisitor implements Opcodes {
         return toWrap;
     }
 
-    private static Class<?> getImplClass(Class<?> clazz, Map<Class<?>, Class<?>> implCache, String name) {
-        Class<?> impl = implCache.get(clazz);
-        if(impl != null) return impl;
-        try {
-            impl = clazz.getMethod(name, Capability.class, EnumFacing.class)
-                    .getDeclaringClass();
-        } catch(NoSuchMethodException e) {
-            impl = Object.class;
-        }
-        implCache.put(clazz, impl);
-        return impl;
-    }
+    private final String internalName;
 
-    private final String name;
-
-    public TileEntityTransformer(ClassVisitor cv, String name) {
+    public TileEntityTransformer(ClassVisitor cv, String internalName) {
         super(ASM5, cv);
-        this.name = name;
+        this.internalName = internalName;
     }
 
-    private static final Method WRAP_CAPABILITY_METHOD;
-    private static final Method WRAP_HAS_CAPABILITY_METHOD;
-    private static final Method GET_CAPABILITY_METHOD;
-    private static final Method HAS_CAPABILITY_METHOD;
+    private enum TransformedMethod {
+        GET(Type.getType(Object.class)),
+        HAS(Type.BOOLEAN_TYPE),
+        ;
 
-    static {
-        Type OBJECT = Type.getType(Object.class);
-        Type CAPABILITY = Type.getObjectType("net/minecraftforge/common/capabilities/Capability");
-        Type ENUM_FACING = Type.getObjectType("net/minecraft/util/EnumFacing");
-        Type CLASS = Type.getType(Class.class);
+        public final Method TO_TRANSFORM;
+        public final Method WRAPPER;
+        public final int OPCODE;
 
-        WRAP_CAPABILITY_METHOD = new Method("wrapCapability",
-                OBJECT,
-                new Type[] {
-                        OBJECT,
-                        OBJECT,
-                        CAPABILITY,
-                        ENUM_FACING,
-                        CLASS
-                });
+        TransformedMethod(Type returnType) {
+            Type OBJECT = Type.getType(Object.class);
+            Type CAPABILITY = Type.getObjectType("net/minecraftforge/common/capabilities/Capability");
+            Type ENUM_FACING = Type.getObjectType("net/minecraft/util/EnumFacing");
+            Type CLASS = Type.getType(Class.class);
 
-        WRAP_HAS_CAPABILITY_METHOD = new Method("wrapHasCapability",
-                Type.BOOLEAN_TYPE,
-                new Type[] {
-                        Type.BOOLEAN_TYPE,
-                        OBJECT,
-                        CAPABILITY,
-                        ENUM_FACING,
-                        CLASS
-                });
+            TO_TRANSFORM = new Method(name().toLowerCase() + "Capability", returnType,
+                    new Type[] {CAPABILITY, ENUM_FACING});
+            WRAPPER = new Method(TO_TRANSFORM.getName() + "Wrapped", returnType,
+                    new Type[] {returnType, OBJECT, CAPABILITY, ENUM_FACING, CLASS});
+            OPCODE = returnType.getOpcode(IRETURN);
+        }
 
-        GET_CAPABILITY_METHOD = new Method("getCapability",
-                OBJECT,
-                new Type[] {
-                        CAPABILITY,
-                        ENUM_FACING
-                });
+        private boolean matches(String name, String desc) {
+            return TO_TRANSFORM.getName().equals(name) && TO_TRANSFORM.getDescriptor().equals(desc);
+        }
 
-        HAS_CAPABILITY_METHOD = new Method("hasCapability",
-                Type.BOOLEAN_TYPE,
-                new Type[] {
-                        CAPABILITY,
-                        ENUM_FACING
-                });
+        private Set<String> transformedInternals = new HashSet<>();
+
+        public static MethodVisitor maybeTransform(MethodVisitor mv, int access, String name, String desc, String thisInternalName) {
+            if((access & ACC_STATIC) != 0) return mv;
+            for(TransformedMethod transformable : values()) {
+                if(transformable.matches(name, desc)) {
+                    transformable.transformedInternals.add(thisInternalName);
+                    return new CapMethodTransformer(mv, transformable, thisInternalName);
+                }
+            }
+            return mv;
+        }
+
+        private Map<Class<?>, Class<?>> implCache = new ConcurrentHashMap<>();
+
+        // can't use reflection because that may cause LinkageError-s
+        public Class<?> getImplementingFor(Class<?> clazz) {
+            if(!transformedInternals.isEmpty()) bakeCache();
+            Class<?> impl = implCache.get(clazz);
+            if(impl != null) return impl;
+            Class<?> next = clazz.getSuperclass();
+            while(next != null) {
+                impl = implCache.get(next);
+                if(impl != null) {
+                    implCache.put(clazz, impl);
+                    return impl;
+                }
+                next = next.getSuperclass();
+            }
+            implCache.put(clazz, null);
+            return null;
+        }
+
+        private void bakeCache() {
+            Iterator<String> it = transformedInternals.iterator();
+            while(it.hasNext()) {
+                String internalName = it.next();
+                it.remove();
+                try {
+                    String className = internalName.replace('/', '.');
+                    Class<?> clazz = Class.forName(className, false, getClass().getClassLoader());
+                    if(TileEntity.class.isAssignableFrom(clazz)) implCache.put(clazz, clazz);
+                } catch(ClassNotFoundException ignored) {
+                }
+            }
+        }
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        if ((access & ACC_STATIC) == 0) {
-            if(GET_CAPABILITY_METHOD.getName().equals(name) &&
-                    GET_CAPABILITY_METHOD.getDescriptor().equals(desc)) {
-                return new GetCapabilityTransformer(mv);
-            } else if(HAS_CAPABILITY_METHOD.getName().equals(name) &&
-                    HAS_CAPABILITY_METHOD.getDescriptor().equals(desc)) {
-                return new HasCapabilityTransformer(mv);
-            }
-        }
-        return mv;
+        return TransformedMethod.maybeTransform(mv, access, name, desc, internalName);
     }
 
-    private class GetCapabilityTransformer extends MethodVisitor {
+    private static class CapMethodTransformer extends MethodVisitor {
 
-        public GetCapabilityTransformer(MethodVisitor mv) {
-            super(TileEntityTransformer.this.api, mv);
+        public static final String TET_INTERNAL = Type.getInternalName(TileEntityTransformer.class);
+        private final Type thisType;
+        private final Method wrapper;
+        private final int target;
+
+        public CapMethodTransformer(MethodVisitor mv, TransformedMethod transformable, String thisInternalName) {
+            super(ASM5, mv);
+            target = transformable.OPCODE;
+            wrapper = transformable.WRAPPER;
+            thisType = Type.getObjectType(thisInternalName);
         }
 
         @Override
         public void visitInsn(int opcode) {
-            if(opcode == ARETURN) {
+            if(opcode == target) {
                 visitVarInsn(ALOAD, 0);
                 visitVarInsn(ALOAD, 1);
                 visitVarInsn(ALOAD, 2);
-                visitLdcInsn(Type.getObjectType(name));
-                visitMethodInsn(INVOKESTATIC,
-                        Type.getInternalName(TileEntityTransformer.class),
-                        WRAP_CAPABILITY_METHOD.getName(),
-                        WRAP_CAPABILITY_METHOD.getDescriptor(),
-                        false);
-            }
-            super.visitInsn(opcode);
-        }
-
-    }
-
-    private class HasCapabilityTransformer extends MethodVisitor {
-
-        public HasCapabilityTransformer(MethodVisitor mv) {
-            super(TileEntityTransformer.this.api, mv);
-        }
-
-        @Override
-        public void visitInsn(int opcode) {
-            if(opcode == IRETURN) {
-                visitVarInsn(ALOAD, 0);
-                visitVarInsn(ALOAD, 1);
-                visitVarInsn(ALOAD, 2);
-                visitLdcInsn(Type.getObjectType(name));
-                visitMethodInsn(INVOKESTATIC,
-                        Type.getInternalName(TileEntityTransformer.class),
-                        WRAP_HAS_CAPABILITY_METHOD.getName(),
-                        WRAP_HAS_CAPABILITY_METHOD.getDescriptor(),
-                        false);
+                visitLdcInsn(thisType);
+                visitMethodInsn(INVOKESTATIC, TET_INTERNAL, wrapper.getName(), wrapper.getDescriptor(), false);
             }
             super.visitInsn(opcode);
         }
