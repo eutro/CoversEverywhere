@@ -20,9 +20,34 @@ compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
 }
 
+sourceSets {
+    common {
+        java
+        compileClasspath += sourceSets.main.compileClasspath
+    }
+    impl {
+        java
+        compileClasspath += sourceSets.common.compileClasspath
+        compileClasspath += sourceSets.common.runtimeClasspath
+    }
+    modules {
+        java
+        compileClasspath += sourceSets.common.compileClasspath
+        compileClasspath += sourceSets.common.runtimeClasspath
+    }
+    main {
+        compileClasspath += sourceSets.common.runtimeClasspath
+        runtimeClasspath += sourceSets.impl.runtimeClasspath
+        runtimeClasspath += sourceSets.modules.runtimeClasspath
+    }
+}
+
 jar {
     from sourceSets.main.output
     from sourceSets.api.output
+    from sourceSets.common.output
+    from sourceSets.impl.output
+    from sourceSets.modules.output
 }
 
 minecraft {
@@ -72,7 +97,7 @@ dependencies {
 jar {
     manifest {
         attributes 'FMLCorePluginContainsFMLMod': 'true'
-        attributes 'FMLCorePlugin': 'eutros.coverseverywhere.asm.CoversEverywhereCoremod'
+        attributes 'FMLCorePlugin': 'eutros.coverseverywhere.impl.asm.CoversEverywhereCoremod'
     }
 }
 
