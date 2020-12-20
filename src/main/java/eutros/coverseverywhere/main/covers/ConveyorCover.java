@@ -85,6 +85,11 @@ public class ConveyorCover implements ICover {
         RenderHelper.side(buff, Textures.CONVEYOR_SPRITE, tile.getPos(), side);
     }
 
+    @Override
+    public ItemStack getRepresentation() {
+        return new ItemStack(ITEM);
+    }
+
     public static class Item extends CoverItem {
 
         private Item() {

@@ -1,18 +1,25 @@
 package eutros.coverseverywhere.main.items;
 
 import eutros.coverseverywhere.api.GridSection;
+import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;
 import eutros.coverseverywhere.api.ICoverRevealer;
 import eutros.coverseverywhere.common.Constants;
+import eutros.coverseverywhere.common.Initialize;
+import eutros.coverseverywhere.common.networking.Packets;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+
+import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
@@ -34,9 +41,43 @@ public class CrowbarItem extends Item implements ICoverRevealer {
         if (holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
-        holder.get(side).clear();
-        tile.markDirty();
+        Collection<ICover> covers = holder.get(side);
+        if (covers.isEmpty()) return EnumActionResult.PASS;
+        if (worldIn.isRemote) {
+            NonNullList<ItemStack> choices = covers.stream()
+                    .map(ICover::getRepresentation)
+                    .collect(Collectors.toCollection(NonNullList::create));
+            RadialGuiScreen.prompt(choices, i -> Packets.NETWORK.sendToServer(new CrowbarMessage(i, pos, side)));
+        }
         return EnumActionResult.SUCCESS;
+    }
+
+    public static class CrowbarMessage extends RadialPacket {
+        public CrowbarMessage() {
+        }
+
+        protected CrowbarMessage(int index, BlockPos pos, EnumFacing side) {
+            super(index, pos, side);
+        }
+
+        @Override
+        public void handle(MessageContext ctx) {
+            WorldServer world = ctx.getServerHandler().player.getServerWorld();
+            coversFor(ctx).ifPresent(covers ->
+                    Objects.requireNonNull(ctx.getServerHandler().player.getServer())
+                            .addScheduledTask(() -> {
+                                        covers.remove(index);
+                                        getApi().synchronize(world, pos, side);
+                                    }
+                            ));
+        }
+    }
+
+    private static final int CROWBAR_DISCRIMINATOR = 100;
+
+    @Initialize
+    public static void init() {
+        RadialPacket.register(CROWBAR_DISCRIMINATOR, CrowbarMessage.class);
     }
 
 }

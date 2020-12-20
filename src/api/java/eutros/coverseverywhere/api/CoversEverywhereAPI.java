@@ -2,6 +2,9 @@ package eutros.coverseverywhere.api;
 
 import com.google.common.base.Suppliers;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -60,4 +63,12 @@ public interface CoversEverywhereAPI {
      */
     Capability<ICoverRevealer> getRevealerCapability();
 
+    /**
+     * Synchronize the side of an {@link ICoverHolder} to nearby players.
+     *
+     * @param world The server world to synchronize from.
+     * @param pos The position of the tile entity.
+     * @param side The side of the tile entity to send.
+     */
+    void synchronize(WorldServer world, BlockPos pos, EnumFacing side);
 }

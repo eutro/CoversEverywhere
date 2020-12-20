@@ -117,6 +117,11 @@ public class GregTechCover implements ICover {
         return false;
     }
 
+    @Override
+    public ItemStack getRepresentation() {
+        return behavior.getPickItem();
+    }
+
     public CoverBehavior getBehaviour() {
         return behavior;
     }

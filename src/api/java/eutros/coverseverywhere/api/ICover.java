@@ -3,6 +3,7 @@ package eutros.coverseverywhere.api;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
 import net.minecraftforge.common.capabilities.Capability;
@@ -97,5 +98,10 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
     default <T> boolean wrapHasCapability(boolean hadBefore, Capability<T> capability) {
         return hadBefore;
     }
+
+    /**
+     * @return The ItemStack representation of this cover, used in GUIs and such.
+     */
+    ItemStack getRepresentation();
 
 }

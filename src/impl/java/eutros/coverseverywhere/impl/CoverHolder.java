@@ -1,7 +1,7 @@
 package eutros.coverseverywhere.impl;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;
@@ -17,6 +17,7 @@ import net.minecraftforge.common.util.INBTSerializable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
@@ -24,7 +25,8 @@ import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompound> {
 
     private TileEntity tile;
-    private final Multimap<EnumFacing, ICover> covers = Multimaps.newSetMultimap(new EnumMap<>(EnumFacing.class), CoverSet::new);
+    private final ListMultimap<EnumFacing, ICover> covers =
+            Multimaps.newListMultimap(new EnumMap<>(EnumFacing.class), CoverSet::new);
 
     public CoverHolder(TileEntity tile) {
         this.tile = tile;
@@ -82,7 +84,7 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
     }
 
     @Override
-    public Collection<ICover> get(EnumFacing side) {
+    public List<ICover> get(EnumFacing side) {
         return covers.get(side);
     }
 
@@ -117,25 +119,52 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
         manager.markDirty();
     }
 
-    private class CoverSet extends LinkedHashSet<ICover> {
+    private class CoverSet extends LinkedList<ICover> {
+
+        private ICover nonNull(@Nullable ICover cover) {
+            if (cover == null) throw new IllegalArgumentException("Null cover");
+            return cover;
+        }
+
+        @SuppressWarnings("unused")
+        private void doAdd(ICover cover) {
+            onAddition();
+        }
+
+        private void doRemoval(ICover cover) {
+            cover.onRemoved();
+            onRemoval();
+        }
 
         @Override
         public boolean add(ICover cover) {
-            if (super.add(cover)) {
-                onAddition();
+            if (super.add(nonNull(cover))) {
+                doAdd(cover);
                 return true;
             }
             return false;
         }
 
         @Override
+        public boolean addAll(int index, Collection<? extends ICover> c) {
+            c.forEach(this::nonNull);
+            return super.addAll(index, c);
+        }
+
+        @Override
         public boolean remove(Object o) {
             if (super.remove(o)) {
-                ((ICover) o).onRemoved();
-                onRemoval();
+                doRemoval((ICover) o);
                 return true;
             }
             return false;
+        }
+
+        @Override
+        public ICover remove(int index) {
+            ICover old = super.remove(index);
+            doRemoval(old);
+            return old;
         }
 
         @Override
@@ -149,10 +178,11 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
         }
 
         @Override
-        public Iterator<ICover> iterator() {
-            Iterator<ICover> delegate = super.iterator();
-            return new Iterator<ICover>() {
-                private ICover current;
+        public ListIterator<ICover> listIterator(int index) {
+            ListIterator<ICover> delegate = super.listIterator(index);
+            return new ListIterator<ICover>() {
+                @Nullable
+                private ICover current = null;
 
                 @Override
                 public boolean hasNext() {
@@ -160,17 +190,47 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
                 }
 
                 @Override
+                public boolean hasPrevious() {
+                    return delegate.hasPrevious();
+                }
+
+                @Override
                 public void remove() {
                     delegate.remove();
-                    if (current != null) {
-                        current.onRemoved();
-                        onRemoval();
-                    }
+                    if (current != null) doRemoval(current);
+                }
+
+                @Override
+                public void set(ICover cover) {
+                    delegate.set(nonNull(cover));
+                    if (current != null) doRemoval(current);
+                    doAdd(current = cover);
+                }
+
+                @Override
+                public void add(ICover cover) {
+                    delegate.add(nonNull(current = cover));
+                    doAdd(cover);
                 }
 
                 @Override
                 public ICover next() {
                     return current = delegate.next();
+                }
+
+                @Override
+                public ICover previous() {
+                    return current = delegate.previous();
+                }
+
+                @Override
+                public int nextIndex() {
+                    return delegate.nextIndex();
+                }
+
+                @Override
+                public int previousIndex() {
+                    return delegate.previousIndex();
                 }
             };
         }

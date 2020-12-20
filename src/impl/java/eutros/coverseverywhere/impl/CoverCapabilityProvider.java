@@ -1,13 +1,13 @@
 package eutros.coverseverywhere.impl;
 
-import eutros.coverseverywhere.common.util.NbtSerializableStorage;
-import eutros.coverseverywhere.common.util.NoOpStorage;
-import eutros.coverseverywhere.common.util.SingletonCapProvider;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;
 import eutros.coverseverywhere.api.ICoverRevealer;
 import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.Initialize;
+import eutros.coverseverywhere.common.util.NbtSerializableStorage;
+import eutros.coverseverywhere.common.util.NoOpStorage;
+import eutros.coverseverywhere.common.util.SingletonCapProvider;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -18,8 +18,8 @@ import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
@@ -58,8 +58,8 @@ public class CoverCapabilityProvider
     private static class NoOpCoverHolder implements ICoverHolder {
 
         @Override
-        public Collection<ICover> get(EnumFacing side) {
-            return Collections.emptySet();
+        public List<ICover> get(EnumFacing side) {
+            return Collections.emptyList();
         }
 
         @Override
