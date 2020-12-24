@@ -46,15 +46,6 @@ public class ConveyorCover implements ICover {
     }
 
     @Override
-    public NBTTagCompound serializeNBT() {
-        return new NBTTagCompound();
-    }
-
-    @Override
-    public void deserializeNBT(NBTTagCompound nbt) {
-    }
-
-    @Override
     public void tick() {
         TileEntity otherTile = tile.getWorld().getTileEntity(tile.getPos().offset(side));
         if (otherTile == null ||
@@ -106,22 +97,28 @@ public class ConveyorCover implements ICover {
 
     public static class Type extends AbstractCoverType {
 
+        private static final ICoverType.CoverSerializer<?> SERIALIZER = new Serializer();
+
         private Type() {
             super(NAME);
         }
 
         @Override
-        public ConveyorCover makeCover(TileEntity tile, EnumFacing side, NBTTagCompound nbt) {
-            ConveyorCover cover = new ConveyorCover(tile, side);
-            cover.deserializeNBT(nbt);
-            return cover;
+        public CoverSerializer<?> getSerializer() {
+            return SERIALIZER;
         }
 
-        @Override
-        public NBTTagCompound serialize(ICover cover) {
-            return cover.serializeNBT();
-        }
+        private static class Serializer implements CoverSerializer<ConveyorCover> {
+            @Override
+            public ConveyorCover makeCover(TileEntity tile, EnumFacing side, NBTTagCompound nbt) {
+                return new ConveyorCover(tile, side);
+            }
 
+            @Override
+            public NBTTagCompound serialize(ConveyorCover cover) {
+                return new NBTTagCompound();
+            }
+        }
     }
 
 }

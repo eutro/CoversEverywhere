@@ -112,7 +112,7 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
             this.covers = new ArrayList<>(covers.size());
             for (ICover cover : covers) {
                 ICoverType type = cover.getType();
-                this.covers.add(Pair.of(type, type.serialize(cover)));
+                this.covers.add(Pair.of(type, type.getSerializer().uncheckedSerialize(cover)));
             }
         }
 
@@ -160,7 +160,7 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
             Collection<ICover> covers = holder.get(message.side);
             covers.clear();
             for (Pair<ICoverType, NBTTagCompound> pair : message.covers) {
-                covers.add(pair.getLeft().makeCover(tile, message.side, pair.getRight()));
+                covers.add(pair.getLeft().getSerializer().makeCover(tile, message.side, pair.getRight()));
             }
             return null;
         }

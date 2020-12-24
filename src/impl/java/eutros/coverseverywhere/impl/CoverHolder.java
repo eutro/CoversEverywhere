@@ -50,7 +50,7 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
                 coverNbt.setString(TYPE_TAG, Preconditions.checkNotNull(type.getRegistryName(),
                         "Attempted to serialize unregistered cover type: %s", type)
                         .toString());
-                coverNbt.setTag(DATA_TAG, type.serialize(cover));
+                coverNbt.setTag(DATA_TAG, type.getSerializer().uncheckedSerialize(cover));
                 sideNbt.appendTag(coverNbt);
             }
             nbt.setTag(side.getName(), sideNbt);
@@ -77,7 +77,7 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
                     LOGGER.warn("Unknown cover type: {}.", typeLoc);
                     continue;
                 }
-                ICover cover = type.makeCover(tile, side, coverNbt.getCompoundTag(DATA_TAG));
+                ICover cover = type.getSerializer().makeCover(tile, side, coverNbt.getCompoundTag(DATA_TAG));
                 if (cover != null) covers.put(side, cover);
             }
         }

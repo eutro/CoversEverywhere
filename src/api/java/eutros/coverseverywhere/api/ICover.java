@@ -4,11 +4,9 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -19,12 +17,11 @@ import javax.annotation.Nullable;
  * <p>
  * Typically, one may wish to hold a reference to the side and tile entity that the cover is on.
  * <p>
- * {@link INBTSerializable} is implemented for convenience, but the associated {@link ICoverType}'s
- * {@link ICoverType#serialize(ICover)} has to call it.
+ * Has to be serialized by its {@link #getType() type}'s {@link ICoverType#getSerializer() serializer}.
  * <p>
  * Can be attached to and obtained from tiles by {@link ICoverHolder}.
  */
-public interface ICover extends INBTSerializable<NBTTagCompound> {
+public interface ICover {
 
     /**
      * Get the {@link ICoverType} of this cover. This will be used for serialization,
@@ -43,7 +40,7 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
 
     /**
      * Called when the cover is removed.
-     *
+     * <p>
      * Covers are responsible for their own drops.
      */
     void onRemoved();
@@ -63,22 +60,19 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
      * Configure this cover, called when the cover is activated with a screwdriver.
      * <p>
      * This might open a GUI, or just change the state immediately.
-     *
-     * @return Whether configuration had any effect.
      */
-    default boolean configure(EntityPlayer player, EnumHand hand, float hitX, float hitY, float hitZ) {
-        return false;
+    default void configure(EntityPlayer player, EnumHand hand, float hitX, float hitY, float hitZ) {
     }
 
     /**
      * Override a capability that the tile entity may have.
-     *
+     * <p>
      * If you are modifying availability (e.g. returning null when toWrap is non-null) in any way you MUST override
      * hasCapability too.
      *
-     * @param toWrap The capability instance to wrap. Null if the tile entity does not have the given capability.
+     * @param toWrap     The capability instance to wrap. Null if the tile entity does not have the given capability.
      * @param capability The capability object that is being looked for.
-     * @param <T> The type of the capability.
+     * @param <T>        The type of the capability.
      * @return The wrapped capability, or {@param toWrap} if no wrapping was done.
      */
     @Nullable
@@ -88,10 +82,10 @@ public interface ICover extends INBTSerializable<NBTTagCompound> {
 
     /**
      * Override the presence of a capability that the tile entity may have.
-     *
+     * <p>
      * This is necessary to keep with the contract of {@link ICapabilityProvider}.
      *
-     * @param hadBefore Whether the capability is already present.
+     * @param hadBefore  Whether the capability is already present.
      * @param capability The capability object.
      * @return Whether the capability object will be present after {@link #wrapCapability(Object, Capability)} is called.
      */

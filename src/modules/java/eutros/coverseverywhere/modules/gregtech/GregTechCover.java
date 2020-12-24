@@ -11,6 +11,7 @@ import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverType;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.cover.CoverBehavior;
+import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.ICoverable;
 import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraft.block.Block;
@@ -67,16 +68,28 @@ public class GregTechCover implements ICover {
         behavior.renderCover(renderState, coverTranslation.copy(), coverPipeline, plateBox, BlockRenderLayer.CUTOUT);
     }
 
-    @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound tag = new NBTTagCompound();
-        behavior.writeToNBT(tag);
-        return tag;
+    private static final String TYPE_KEY = "type";
+    private static final String DATA_KEY = "data";
+
+    public NBTTagCompound serialize() {
+        NBTTagCompound nbt = new NBTTagCompound();
+        nbt.setString(TYPE_KEY, behavior
+                .getCoverDefinition()
+                .getCoverId()
+                .toString());
+        NBTTagCompound data = new NBTTagCompound();
+        behavior.writeToNBT(data);
+        nbt.setTag(DATA_KEY, data);
+        return nbt;
     }
 
-    @Override
-    public void deserializeNBT(NBTTagCompound nbt) {
-        behavior.readFromNBT(nbt);
+    @Nullable
+    static GregTechCover deserialize(TileEntity tile, EnumFacing side, NBTTagCompound nbt) {
+        CoverDefinition definition = CoverDefinition.getCoverById(new ResourceLocation(nbt.getString(TYPE_KEY)));
+        if (definition == null) return null;
+        CoverBehavior behavior = definition.createCoverBehavior(new TileWrapper(tile), side);
+        behavior.readFromNBT(nbt.getCompoundTag(DATA_KEY));
+        return new GregTechCover(behavior, tile, side);
     }
 
     @Override
@@ -85,13 +98,13 @@ public class GregTechCover implements ICover {
     }
 
     @Override
-    public boolean configure(EntityPlayer player, EnumHand hand, float hitX, float hitY, float hitZ) {
+    public void configure(EntityPlayer player, EnumHand hand, float hitX, float hitY, float hitZ) {
         Vec3d tileVec = new Vec3d(tile.getPos());
         CuboidRayTraceResult crt = new CuboidRayTraceResult(player,
                 new Vector3(tileVec),
                 new IndexedCuboid6(null, new AxisAlignedBB(tile.getPos())),
                 player.getPositionVector().distanceTo(new Vec3d(hitX, hitY, hitZ).add(tileVec)));
-        return behavior.onScrewdriverClick(player, hand, crt) == EnumActionResult.SUCCESS;
+        behavior.onScrewdriverClick(player, hand, crt);
     }
 
     @Override
