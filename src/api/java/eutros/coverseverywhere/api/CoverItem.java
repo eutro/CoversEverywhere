@@ -33,7 +33,7 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
         if (holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
-        ICover cover = makeCover(tile, player, hand, side);
+        ICover cover = makeCover(tile, holder, player, hand, side);
         if (cover == null) return EnumActionResult.PASS;
 
         holder.get(side).add(cover);
@@ -57,12 +57,13 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
      * Create a cover from the given player for the given tile entity.
      *
      * @param tile   The tile entity that the cover will be placed on.
+     * @param holder The cover holder of the tile entity.
      * @param player The player placing the cover.
      * @param hand   The hand the player is using to place the cover.
      * @param side   The side of the tile entity that the cover is to be placed on.
      * @return The created cover, or null if no cover should be placed.
      */
     @Nullable
-    protected abstract ICover makeCover(TileEntity tile, EntityPlayer player, EnumHand hand, EnumFacing side);
+    protected abstract ICover makeCover(TileEntity tile, ICoverHolder holder, EntityPlayer player, EnumHand hand, EnumFacing side);
 
 }

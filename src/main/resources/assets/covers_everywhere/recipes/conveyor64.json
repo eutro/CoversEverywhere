@@ -1,0 +1,24 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "CC",
+    "CC"
+  ],
+  "key": {
+    "C": {
+      "type": "minecraft:item_nbt",
+      "item": "covers_everywhere:conveyor",
+      "nbt": {
+        "frequency": 20,
+        "count": 16
+      }
+    }
+  },
+  "result": {
+    "item": "covers_everywhere:conveyor",
+    "nbt": {
+      "frequency": 20,
+      "count": 64
+    }
+  }
+}

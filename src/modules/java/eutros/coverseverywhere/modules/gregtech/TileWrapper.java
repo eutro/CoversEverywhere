@@ -265,8 +265,7 @@ class TileWrapper implements ICoverable {
 
     @Override
     public double getCoverPlateThickness() {
-        return tile.getWorld().getBlockState(tile.getPos()).isFullCube()
-                ? 0 : (1.0 / 16.0);
+        return 0;
     }
 
     @Override
@@ -276,7 +275,7 @@ class TileWrapper implements ICoverable {
 
     @Override
     public boolean shouldRenderBackSide() {
-        return false;
+        return true;
     }
 
     @Override

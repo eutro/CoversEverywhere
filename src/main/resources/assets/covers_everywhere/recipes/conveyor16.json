@@ -1,0 +1,17 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "HH",
+    "HH"
+  ],
+  "key": {
+    "H": { "item": "minecraft:hopper" }
+  },
+  "result": {
+    "item": "covers_everywhere:conveyor",
+    "nbt": {
+      "frequency": 20,
+      "count": 16
+    }
+  }
+}

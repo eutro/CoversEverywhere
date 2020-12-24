@@ -13,7 +13,11 @@ import net.minecraft.util.math.MathHelper;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.IntConsumer;
+
+import static net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED;
+import static net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL;
 
 public class RadialGuiScreen extends GuiScreen {
 
@@ -94,6 +98,13 @@ public class RadialGuiScreen extends GuiScreen {
                     currentAngle += sliceAngle;
                 }
                 break;
+        }
+
+        int slice = getSelectedSlice();
+        if (optionsSize > slice) {
+            ItemStack stack = options.get(slice);
+            List<String> tooltip = stack.getTooltip(mc.player, mc.gameSettings.advancedItemTooltips ? ADVANCED : NORMAL);
+            drawHoveringText(tooltip, mouseX, mouseY);
         }
     }
 

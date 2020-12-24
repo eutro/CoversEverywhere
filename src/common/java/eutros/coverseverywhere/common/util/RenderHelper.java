@@ -3,11 +3,11 @@ package eutros.coverseverywhere.common.util;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.math.BlockPos;
 
 public class RenderHelper {
 
-    public static void side(BufferBuilder buff, TextureAtlasSprite sprite, Vec3i pos, EnumFacing side) {
+    public static void side(BufferBuilder buff, TextureAtlasSprite sprite, BlockPos pos, EnumFacing side) {
         float
                 x1, y1, z1,
                 x2, y2, z2,
@@ -83,6 +83,11 @@ public class RenderHelper {
                 .tex(sprite.getMaxU(), sprite.getMaxV())
                 .lightmap(0xFFFF, 0xFFFF)
                 .endVertex();
+    }
+
+    public static void sideDouble(BufferBuilder buff, TextureAtlasSprite sprite, BlockPos pos, EnumFacing side) {
+        side(buff, sprite, pos, side);
+        side(buff, sprite, pos.offset(side), side.getOpposite());
     }
 
 }

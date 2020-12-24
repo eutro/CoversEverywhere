@@ -1,3 +1,8 @@
 item.covers_everywhere.conveyor.name=Conveyor
+item.covers_everywhere.conveyor.tooltip=Transfers %s items every %s second(s)
+
 item.covers_everywhere.crowbar.name=Crowbar
+item.covers_everywhere.crowbar.tooltip=Remove a cover from the selected face.
+
 item.covers_everywhere.screwdriver.name=Screwdriver
+item.covers_everywhere.screwdriver.tooltip=Configure a cover on the selected face.
