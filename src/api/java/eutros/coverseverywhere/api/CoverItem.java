@@ -13,28 +13,28 @@ import javax.annotation.Nullable;
 
 /**
  * An item that can be used as a cover, showing the grid and any placed covers.
- *
+ * <p>
  * You don't have to extend this class, other implementations are possible, if you wish.
  */
 public abstract class CoverItem extends Item implements ICoverRevealer {
 
     /**
      * Called when a Block is right-clicked with this Item.
-     *
+     * <p>
      * Places the cover based on the selected {@link GridSection}.
      * The stack is then partially consumed as by {@link #consumeOne(EntityPlayer, EnumHand)}.
      */
     @Override
     public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         TileEntity tile = worldIn.getTileEntity(pos);
-        if(tile == null) return EnumActionResult.PASS;
+        if (tile == null) return EnumActionResult.PASS;
 
         ICoverHolder holder = tile.getCapability(CoversEverywhereAPI.getApi().getHolderCapability(), null);
-        if(holder == null) return EnumActionResult.PASS;
+        if (holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
         ICover cover = makeCover(tile, player, hand, side);
-        if(cover == null) return EnumActionResult.PASS;
+        if (cover == null) return EnumActionResult.PASS;
 
         holder.get(side).add(cover);
         tile.markDirty();
@@ -47,19 +47,19 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
      * such as by reducing the stack size (the default).
      *
      * @param player The player placing the cover.
-     * @param hand The hand the player is placing the cover with.
+     * @param hand   The hand the player is placing the cover with.
      */
     protected void consumeOne(EntityPlayer player, EnumHand hand) {
-        if(!player.isCreative()) player.getHeldItem(hand).shrink(1);
+        if (!player.isCreative()) player.getHeldItem(hand).shrink(1);
     }
 
     /**
      * Create a cover from the given player for the given tile entity.
      *
-     * @param tile The tile entity that the cover will be placed on.
+     * @param tile   The tile entity that the cover will be placed on.
      * @param player The player placing the cover.
-     * @param hand The hand the player is using to place the cover.
-     * @param side The side of the tile entity that the cover is to be placed on.
+     * @param hand   The hand the player is using to place the cover.
+     * @param side   The side of the tile entity that the cover is to be placed on.
      * @return The created cover, or null if no cover should be placed.
      */
     @Nullable

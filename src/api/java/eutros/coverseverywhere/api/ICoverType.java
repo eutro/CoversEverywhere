@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 
 /**
  * The type of a cover, used primarily for deserialization.
- *
+ * <p>
  * These should be registered with {@link IForgeRegistry#register(IForgeRegistryEntry)}.
  */
 public interface ICoverType extends IForgeRegistryEntry<ICoverType> {

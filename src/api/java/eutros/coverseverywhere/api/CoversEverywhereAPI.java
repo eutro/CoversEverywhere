@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 /**
  * An entry point for the API of the Covers Everywhere mod.
- *
+ * <p>
  * The instance can be obtained with {@link #getApi()}.
  */
 public interface CoversEverywhereAPI {
@@ -21,7 +21,7 @@ public interface CoversEverywhereAPI {
     Supplier<CoversEverywhereAPI> INSTANCE = Suppliers.memoize(() -> {
         try {
             return (CoversEverywhereAPI) Class.forName("eutros.coverseverywhere.impl.CoversEverywhereAPIImpl").newInstance();
-        } catch(ReflectiveOperationException e) {
+        } catch (ReflectiveOperationException e) {
             // fail fast
             throw new RuntimeException("Couldn't find CoversEverywhereAPIImpl.", e);
         }
@@ -41,7 +41,7 @@ public interface CoversEverywhereAPI {
 
     /**
      * Get the {@link Capability} for {@link ICoverHolder}s.
-     *
+     * <p>
      * This is for convenience for hard dependencies, soft dependencies can use
      * {@link CapabilityInject} to obtain this instance.
      *
@@ -51,10 +51,10 @@ public interface CoversEverywhereAPI {
 
     /**
      * Get the {@link Capability} for {@link ICoverRevealer}s.
-     *
+     * <p>
      * This is for convenience for hard dependencies, soft dependencies can use
      * {@link CapabilityInject} to obtain this instance.
-     *
+     * <p>
      * Note that not all {@link ItemStack}s representing {@link ICoverRevealer}s will
      * have this capability. Any stacks whose {@link ItemStack#getItem()} implements
      * {@link ICoverRevealer} also count.
@@ -67,8 +67,8 @@ public interface CoversEverywhereAPI {
      * Synchronize the side of an {@link ICoverHolder} to nearby players.
      *
      * @param world The server world to synchronize from.
-     * @param pos The position of the tile entity.
-     * @param side The side of the tile entity to send.
+     * @param pos   The position of the tile entity.
+     * @param side  The side of the tile entity to send.
      */
     void synchronize(WorldServer world, BlockPos pos, EnumFacing side);
 }

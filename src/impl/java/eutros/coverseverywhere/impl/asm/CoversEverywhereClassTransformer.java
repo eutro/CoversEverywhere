@@ -1,10 +1,10 @@
 package eutros.coverseverywhere.impl.asm;
 
+import net.minecraft.launchwrapper.IClassTransformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import net.minecraft.launchwrapper.IClassTransformer;
 
 import javax.annotation.Nullable;
 

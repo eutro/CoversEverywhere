@@ -1,8 +1,8 @@
 package eutros.coverseverywhere.impl;
 
-import eutros.coverseverywhere.common.util.CapHelper;
 import eutros.coverseverywhere.api.ICoverRevealer;
 import eutros.coverseverywhere.common.Initialize;
+import eutros.coverseverywhere.common.util.CapHelper;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.GlStateManager;
@@ -71,6 +71,5 @@ public class GridRenderer {
             GlStateManager.disableBlend();
         }
     }
-
 
 }

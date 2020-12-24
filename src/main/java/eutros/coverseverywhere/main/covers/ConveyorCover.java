@@ -1,11 +1,11 @@
 package eutros.coverseverywhere.main.covers;
 
-import eutros.coverseverywhere.common.util.RenderHelper;
 import eutros.coverseverywhere.api.AbstractCoverType;
 import eutros.coverseverywhere.api.CoverItem;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverType;
 import eutros.coverseverywhere.common.Constants;
+import eutros.coverseverywhere.common.util.RenderHelper;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.player.EntityPlayer;
