@@ -17,6 +17,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
@@ -149,6 +150,9 @@ public class ItemCompatHandler {
             for (ICover cover : holder.get(side)) {
                 if (cover instanceof GregTechCover) {
                     cover.configure(player, hand, hitX, hitY, hitZ);
+                    screwdriver.damageItem(1, false);
+                    evt.setCanceled(true);
+                    evt.setCancellationResult(EnumActionResult.SUCCESS);
                     break;
                 }
             }
