@@ -1,9 +1,12 @@
 package eutros.coverseverywhere.common.util;
 
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import org.lwjgl.opengl.GL11;
 
 public class RenderHelper {
 
@@ -88,6 +91,25 @@ public class RenderHelper {
     public static void sideDouble(BufferBuilder buff, TextureAtlasSprite sprite, BlockPos pos, EnumFacing side) {
         side(buff, sprite, pos, side);
         side(buff, sprite, pos.offset(side), side.getOpposite());
+    }
+
+    public static void icon(int x, int y, int z, TextureAtlasSprite sprite) {
+        int w = sprite.getIconWidth();
+        x -= w / 2;
+        int h = sprite.getIconHeight();
+        y -= h / 2;
+        int O = 0;
+
+        Tessellator tes = Tessellator.getInstance();
+        BufferBuilder buf = tes.getBuffer();
+        buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+
+        buf.pos(x + O, y + O, z).tex(sprite.getMinU(), sprite.getMinV()).endVertex();
+        buf.pos(x + O, y + h, z).tex(sprite.getMinU(), sprite.getMaxV()).endVertex();
+        buf.pos(x + w, y + h, z).tex(sprite.getMaxU(), sprite.getMaxV()).endVertex();
+        buf.pos(x + w, y + O, z).tex(sprite.getMaxU(), sprite.getMinV()).endVertex();
+
+        tes.draw();
     }
 
 }

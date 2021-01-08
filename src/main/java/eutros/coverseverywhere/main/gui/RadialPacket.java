@@ -1,4 +1,4 @@
-package eutros.coverseverywhere.main.items;
+package eutros.coverseverywhere.main.gui;
 
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;

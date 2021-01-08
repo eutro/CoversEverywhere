@@ -1,5 +1,7 @@
 package eutros.coverseverywhere.impl;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import eutros.coverseverywhere.api.*;
 import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.Initialize;
@@ -10,7 +12,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -30,12 +31,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
+import static eutros.coverseverywhere.common.Constants.prefix;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
 public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
@@ -48,21 +47,16 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
 
     private static IForgeRegistry<ICoverType> REGISTRY;
 
-    private static final int SYNCHRONIZE_DISCRIMINATOR = 0;
-
     @Initialize
     public static void init() {
-        Packets.NETWORK.registerMessage(new SynchronizeMessageHandler(),
-                SynchronizeMessage.class,
-                SYNCHRONIZE_DISCRIMINATOR,
-                Side.CLIENT);
+        Packets.NETWORK.registerMessage(new SynchronizeMessageHandler(), SynchronizeMessage.class, Packets.SYNCHRONIZE_DISCRIMINATOR, Side.CLIENT);
     }
 
     // fires before pre-init *grumble grumble*
     @SubscribeEvent
     public static void registerRegistriesEvent(RegistryEvent.NewRegistry evt) {
         REGISTRY = new RegistryBuilder<ICoverType>()
-                .setName(new ResourceLocation(Constants.MOD_ID, "covers"))
+                .setName(prefix("covers"))
                 .setType(ICoverType.class)
                 .create();
     }
@@ -85,12 +79,12 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
     }
 
     @Override
-    public void synchronize(WorldServer world, BlockPos pos, EnumFacing side) {
+    public void synchronize(WorldServer world, BlockPos pos, EnumFacing... sides) {
         TileEntity tile = world.getTileEntity(pos);
         if (tile == null) return;
         ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
         if (holder == null) return;
-        Packets.NETWORK.sendToAllTracking(new SynchronizeMessage(pos, side, holder.get(side)),
+        Packets.NETWORK.sendToAllTracking(new SynchronizeMessage(pos, holder, sides),
                 new NetworkRegistry.TargetPoint(world.provider.getDimension(),
                         pos.getX(),
                         pos.getY(),
@@ -99,20 +93,21 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
     }
 
     public static class SynchronizeMessage implements IMessage {
-        public List<Pair<ICoverType, NBTTagCompound>> covers;
+        public Multimap<EnumFacing, Pair<ICoverType, NBTTagCompound>> covers = Multimaps.newMultimap(new EnumMap<>(EnumFacing.class), LinkedList::new);
         private BlockPos pos;
-        private EnumFacing side;
+        private EnumFacing[] sides;
 
         public SynchronizeMessage() {
         }
 
-        public SynchronizeMessage(BlockPos pos, EnumFacing side, Collection<ICover> covers) {
+        public SynchronizeMessage(BlockPos pos, ICoverHolder holder, EnumFacing[] sides) {
             this.pos = pos;
-            this.side = side;
-            this.covers = new ArrayList<>(covers.size());
-            for (ICover cover : covers) {
-                ICoverType type = cover.getType();
-                this.covers.add(Pair.of(type, type.getSerializer().uncheckedSerialize(cover)));
+            this.sides = sides;
+            for (EnumFacing side : sides) {
+                for (ICover cover : holder.get(side)) {
+                    ICoverType type = cover.getType();
+                    this.covers.put(side, Pair.of(type, type.getSerializer().uncheckedSerialize(cover)));
+                }
             }
         }
 
@@ -121,14 +116,19 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
             try {
                 PacketBuffer pb = new PacketBuffer(buf);
                 pos = pb.readBlockPos();
-                side = pb.readEnumValue(EnumFacing.class);
-                int size = pb.readVarInt();
-                covers = new ArrayList<>(size);
-                for (int i = 0; i < size; i++) {
-                    covers.add(Pair.of(
-                            getApi().getRegistry().getValue(pb.readResourceLocation()),
-                            pb.readCompoundTag()
-                    ));
+                sides = new EnumFacing[pb.readVarInt()];
+                for (int i = 0; i < sides.length; i++) {
+                    sides[i] = pb.readEnumValue(EnumFacing.class);
+                }
+                for (EnumFacing side : sides) {
+                    int size = pb.readVarInt();
+                    for (int i = 0; i < size; i++) {
+                        covers.put(side,
+                                Pair.of(
+                                        getApi().getRegistry().getValue(pb.readResourceLocation()),
+                                        pb.readCompoundTag()
+                                ));
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e); // why
@@ -139,11 +139,17 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
         public void toBytes(ByteBuf buf) {
             PacketBuffer pb = new PacketBuffer(buf);
             pb.writeBlockPos(pos);
-            pb.writeEnumValue(side);
-            pb.writeVarInt(covers.size());
-            for (Pair<ICoverType, NBTTagCompound> pair : covers) {
-                pb.writeResourceLocation(Objects.requireNonNull(pair.getLeft().getRegistryName()));
-                pb.writeCompoundTag(pair.getRight());
+            pb.writeVarInt(sides.length);
+            for (EnumFacing side : sides) {
+                pb.writeEnumValue(side);
+            }
+            for (EnumFacing side : sides) {
+                Collection<Pair<ICoverType, NBTTagCompound>> covers = this.covers.get(side);
+                pb.writeVarInt(covers.size());
+                for (Pair<ICoverType, NBTTagCompound> pair : covers) {
+                    pb.writeResourceLocation(Objects.requireNonNull(pair.getLeft().getRegistryName()));
+                    pb.writeCompoundTag(pair.getRight());
+                }
             }
         }
     }
@@ -157,10 +163,12 @@ public class CoversEverywhereAPIImpl implements CoversEverywhereAPI {
             if (tile == null) return null;
             ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
             if (holder == null) return null;
-            Collection<ICover> covers = holder.get(message.side);
-            covers.clear();
-            for (Pair<ICoverType, NBTTagCompound> pair : message.covers) {
-                covers.add(pair.getLeft().getSerializer().makeCover(tile, message.side, pair.getRight()));
+            for (EnumFacing side : message.sides) {
+                Collection<ICover> covers = holder.get(side);
+                covers.clear();
+                for (Pair<ICoverType, NBTTagCompound> pair : message.covers.get(side)) {
+                    covers.add(pair.getLeft().getSerializer().makeCover(tile, side, pair.getRight()));
+                }
             }
             return null;
         }

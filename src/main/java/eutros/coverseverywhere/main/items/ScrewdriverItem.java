@@ -4,9 +4,10 @@ import eutros.coverseverywhere.api.GridSection;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;
 import eutros.coverseverywhere.api.ICoverRevealer;
-import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.Initialize;
 import eutros.coverseverywhere.common.networking.Packets;
+import eutros.coverseverywhere.main.gui.RadialGuiScreen;
+import eutros.coverseverywhere.main.gui.RadialPacket;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -19,6 +20,7 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 import javax.annotation.Nullable;
@@ -27,10 +29,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
+import static eutros.coverseverywhere.common.Constants.prefix;
 
 public class ScrewdriverItem extends Item implements ICoverRevealer {
 
-    public static final ResourceLocation NAME = new ResourceLocation(Constants.MOD_ID, "screwdriver");
+    public static final ResourceLocation NAME = prefix("screwdriver");
 
     public ScrewdriverItem() {
         setRegistryName(NAME);
@@ -45,8 +48,8 @@ public class ScrewdriverItem extends Item implements ICoverRevealer {
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        TileEntity tile = worldIn.getTileEntity(pos);
+    public EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, EnumHand hand) {
+        TileEntity tile = world.getTileEntity(pos);
         if (tile == null) return EnumActionResult.PASS;
 
         ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
@@ -55,7 +58,7 @@ public class ScrewdriverItem extends Item implements ICoverRevealer {
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
         List<ICover> covers = holder.get(side);
         if (covers.isEmpty()) return EnumActionResult.FAIL;
-        if (worldIn.isRemote) {
+        if (world.isRemote) {
             NonNullList<ItemStack> choices = covers.stream()
                     .map(ICover::getRepresentation)
                     .collect(Collectors.toCollection(NonNullList::create));
@@ -63,6 +66,8 @@ public class ScrewdriverItem extends Item implements ICoverRevealer {
                 covers.get(i).configure(player, hand, hitX, hitY, hitZ);
                 Packets.NETWORK.sendToServer(new ScrewdriverMessage(i, pos, side, hand, hitX, hitY, hitZ));
             });
+        } else {
+            getApi().synchronize((WorldServer) world, pos, side);
         }
         return EnumActionResult.SUCCESS;
     }
@@ -112,10 +117,8 @@ public class ScrewdriverItem extends Item implements ICoverRevealer {
         }
     }
 
-    private static final int SCREWDRIVER_DISCRIMINATOR = 101;
-
     @Initialize
     public static void init() {
-        RadialPacket.register(SCREWDRIVER_DISCRIMINATOR, ScrewdriverMessage.class);
+        RadialPacket.register(Packets.SCREWDRIVER_DISCRIMINATOR, ScrewdriverMessage.class);
     }
 }

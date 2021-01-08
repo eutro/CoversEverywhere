@@ -3,7 +3,6 @@ package eutros.coverseverywhere.impl;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;
 import eutros.coverseverywhere.api.ICoverRevealer;
-import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.Initialize;
 import eutros.coverseverywhere.common.util.NbtSerializableStorage;
 import eutros.coverseverywhere.common.util.NoOpStorage;
@@ -22,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
+import static eutros.coverseverywhere.common.Constants.prefix;
 
 public class CoverCapabilityProvider
         extends SingletonCapProvider<CoverHolder>
@@ -38,7 +38,7 @@ public class CoverCapabilityProvider
         CapabilityManager.INSTANCE.register(ICoverRevealer.class, new NoOpStorage<>(), NoOpCoverRevealer::new);
     }
 
-    private static final ResourceLocation NAME = new ResourceLocation(Constants.MOD_ID, "covers");
+    private static final ResourceLocation NAME = prefix("covers");
 
     @SubscribeEvent
     public static void onTile(AttachCapabilitiesEvent<TileEntity> event) {

@@ -64,11 +64,11 @@ public interface CoversEverywhereAPI {
     Capability<ICoverRevealer> getRevealerCapability();
 
     /**
-     * Synchronize the side of an {@link ICoverHolder} to nearby players.
+     * Synchronize the sides of an {@link ICoverHolder} to nearby players.
      *
      * @param world The server world to synchronize from.
      * @param pos   The position of the tile entity.
-     * @param side  The side of the tile entity to send.
+     * @param sides The sides of the tile entity to send.
      */
-    void synchronize(WorldServer world, BlockPos pos, EnumFacing side);
+    void synchronize(WorldServer world, BlockPos pos, EnumFacing... sides);
 }

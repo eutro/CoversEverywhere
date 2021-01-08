@@ -42,10 +42,7 @@ class TileWrapper implements ICoverable {
     }
 
     public static void initNetworking(SimpleNetworkWrapper network) {
-        network.registerMessage(new Handler(),
-                ClientMessage.class,
-                Networking.discriminator++,
-                Side.CLIENT);
+        network.registerMessage(new Handler(), ClientMessage.class, Networking.discriminator++, Side.CLIENT);
     }
 
     public static class ClientMessage implements IMessage {

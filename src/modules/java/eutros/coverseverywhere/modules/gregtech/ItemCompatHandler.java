@@ -4,7 +4,6 @@ import eutros.coverseverywhere.api.GridSection;
 import eutros.coverseverywhere.api.ICover;
 import eutros.coverseverywhere.api.ICoverHolder;
 import eutros.coverseverywhere.api.ICoverRevealer;
-import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.util.SingletonCapProvider;
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.tool.IScrewdriverItem;
@@ -34,6 +33,7 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 
 import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
+import static eutros.coverseverywhere.common.Constants.prefix;
 
 public class ItemCompatHandler {
 
@@ -57,7 +57,7 @@ public class ItemCompatHandler {
 
     private static class GridHandler {
 
-        public static final ResourceLocation CAP_NAME = new ResourceLocation(Constants.MOD_ID, "gregtech_cover_item");
+        public static final ResourceLocation CAP_NAME = prefix("gregtech_cover_item");
 
         @SubscribeEvent
         public static void onStack(AttachCapabilitiesEvent<ItemStack> evt) {

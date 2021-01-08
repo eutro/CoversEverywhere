@@ -1,6 +1,17 @@
 item.covers_everywhere.conveyor.name=Conveyor
 item.covers_everywhere.conveyor.tooltip=Transfers %s items every %s second(s)
 
+item.covers_everywhere.filter.name=Item Filter
+item.covers_everywhere.filter.tooltip.list.white=Whitelisting
+item.covers_everywhere.filter.tooltip.list.black=Blacklisting
+item.covers_everywhere.filter.tooltip.compare.item.true=Comparing Items
+item.covers_everywhere.filter.tooltip.compare.item.false=Not Comparing Items
+item.covers_everywhere.filter.tooltip.compare.damage.true=Comparing Metadata
+item.covers_everywhere.filter.tooltip.compare.damage.false=Not Comparing Metadata
+item.covers_everywhere.filter.tooltip.compare.tag.true=Comparing NBT
+item.covers_everywhere.filter.tooltip.compare.tag.false=Not Comparing NBT
+item.covers_everywhere.filter.tooltip.stacks=Stacks:
+
 item.covers_everywhere.crowbar.name=Crowbar
 item.covers_everywhere.crowbar.tooltip=Remove a cover from the selected face.
 

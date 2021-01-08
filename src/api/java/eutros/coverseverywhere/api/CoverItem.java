@@ -8,8 +8,11 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 import javax.annotation.Nullable;
+
+import static eutros.coverseverywhere.api.CoversEverywhereAPI.getApi;
 
 /**
  * An item that can be used as a cover, showing the grid and any placed covers.
@@ -29,16 +32,18 @@ public abstract class CoverItem extends Item implements ICoverRevealer {
         TileEntity tile = worldIn.getTileEntity(pos);
         if (tile == null) return EnumActionResult.PASS;
 
-        ICoverHolder holder = tile.getCapability(CoversEverywhereAPI.getApi().getHolderCapability(), null);
+        ICoverHolder holder = tile.getCapability(getApi().getHolderCapability(), null);
         if (holder == null) return EnumActionResult.PASS;
 
         EnumFacing side = GridSection.fromXYZ(facing, hitX, hitY, hitZ).offset(facing);
         ICover cover = makeCover(tile, holder, player, hand, side);
         if (cover == null) return EnumActionResult.PASS;
 
+        if (worldIn.isRemote) return EnumActionResult.SUCCESS;
         holder.get(side).add(cover);
         tile.markDirty();
         consumeOne(player, hand);
+        getApi().synchronize((WorldServer) worldIn, pos, side);
         return EnumActionResult.SUCCESS;
     }
 

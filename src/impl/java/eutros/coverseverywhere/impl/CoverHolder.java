@@ -116,7 +116,7 @@ public class CoverHolder implements ICoverHolder, INBTSerializable<NBTTagCompoun
     }
 
     void onRemoval() {
-        manager.markDirty();
+        if (manager != null) manager.markDirty();
     }
 
     private class CoverSet extends LinkedList<ICover> {

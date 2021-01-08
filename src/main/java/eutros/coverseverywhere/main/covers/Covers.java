@@ -22,6 +22,7 @@ public class Covers {
         IForgeRegistry<ICoverType> r = evt.getRegistry();
 
         r.register(ConveyorCover.TYPE);
+        r.register(FilterCover.TYPE);
     }
 
     @SubscribeEvent
@@ -29,11 +30,13 @@ public class Covers {
         IForgeRegistry<Item> r = evt.getRegistry();
 
         r.register(ConveyorCover.ITEM);
+        r.register(FilterCover.ITEM);
     }
 
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent evt) {
         ModItems.registerModel(ConveyorCover.ITEM, ConveyorCover.NAME);
+        ModItems.registerModel(FilterCover.ITEM, FilterCover.NAME);
     }
 
 }

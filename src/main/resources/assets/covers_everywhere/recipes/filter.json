@@ -1,0 +1,20 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "H",
+    "P"
+  ],
+  "key": {
+    "H": { "item": "minecraft:hopper" },
+    "P": { "ore": "paper", "type": "forge:ore_dict" }
+  },
+  "result": {
+    "item": "covers_everywhere:filter",
+    "nbt": {
+      "whitelist":  true,
+      "compareItem": true,
+      "compareDamage":  true,
+      "compareTag": true
+    }
+  }
+}

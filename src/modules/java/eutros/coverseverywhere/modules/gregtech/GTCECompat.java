@@ -1,18 +1,18 @@
 package eutros.coverseverywhere.modules.gregtech;
 
 import eutros.coverseverywhere.api.ICoverType;
-import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.Initialize;
 import eutros.coverseverywhere.common.util.SingletonCapProvider;
 import gregtech.api.capability.GregtechTileCapabilities;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistry;
+
+import static eutros.coverseverywhere.common.Constants.prefix;
 
 public class GTCECompat {
 
@@ -33,7 +33,7 @@ public class GTCECompat {
     @SubscribeEvent
     public static void onTile(AttachCapabilitiesEvent<TileEntity> evt) {
         if (!(evt.getObject() instanceof MetaTileEntityHolder)) {
-            evt.addCapability(new ResourceLocation(Constants.MOD_ID, "coverable"),
+            evt.addCapability(prefix("coverable"),
                     new SingletonCapProvider<>(GregtechTileCapabilities.CAPABILITY_COVERABLE,
                             new TileWrapper(evt.getObject())));
         }

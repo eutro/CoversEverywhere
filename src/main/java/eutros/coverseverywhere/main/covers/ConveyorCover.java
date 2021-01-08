@@ -1,7 +1,6 @@
 package eutros.coverseverywhere.main.covers;
 
 import eutros.coverseverywhere.api.*;
-import eutros.coverseverywhere.common.Constants;
 import eutros.coverseverywhere.common.util.RenderHelper;
 import eutros.coverseverywhere.main.items.ModItems;
 import net.minecraft.block.Block;
@@ -29,9 +28,11 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import static eutros.coverseverywhere.common.Constants.prefix;
+
 public class ConveyorCover implements ICover, INBTSerializable<NBTTagCompound> {
 
-    public static final ResourceLocation NAME = new ResourceLocation(Constants.MOD_ID, "conveyor");
+    public static final ResourceLocation NAME = prefix("conveyor");
     public static final Type TYPE = new Type();
     public static final Item ITEM = new Item();
 

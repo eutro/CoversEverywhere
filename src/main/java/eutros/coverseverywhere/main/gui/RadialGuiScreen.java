@@ -1,5 +1,6 @@
-package eutros.coverseverywhere.main.items;
+package eutros.coverseverywhere.main.gui;
 
+import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -8,42 +9,61 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntConsumer;
 
-import static net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED;
-import static net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL;
-
 public class RadialGuiScreen extends GuiScreen {
 
-    public static void prompt(NonNullList<ItemStack> options, IntConsumer selectionConsumer) {
+    public static void prompt(List<ItemStack> stacks, IntConsumer selectionConsumer) {
         Minecraft mc = Minecraft.getMinecraft();
-        mc.displayGuiScreen(new RadialGuiScreen(options, selectionConsumer));
+        List<Option> options = new ArrayList<>();
+        for (ItemStack stack : stacks) options.add(new StackOption(stack));
+        mc.displayGuiScreen(new RadialGuiScreen(true, options, selectionConsumer));
     }
 
-    private final NonNullList<ItemStack> options;
+    public static void prompt(IntConsumer selectionConsumer, Option... options) {
+        prompt(true, selectionConsumer, options);
+    }
+
+    public static void prompt(boolean closeOnChoice, IntConsumer selectionConsumer, Option... options) {
+        Minecraft mc = Minecraft.getMinecraft();
+        mc.displayGuiScreen(new RadialGuiScreen(closeOnChoice, Arrays.asList(options), selectionConsumer));
+    }
+
+    private final boolean closeOnChoice;
+    private final List<Option> options;
     private final IntConsumer selectionConsumer;
 
-    public RadialGuiScreen(NonNullList<ItemStack> options, IntConsumer selectionConsumer) {
-        this.options = options;
+    private RadialGuiScreen(boolean closeOnChoice, List<Option> options, IntConsumer selectionConsumer) {
+        this.closeOnChoice = closeOnChoice;
+        this.options = ImmutableList.copyOf(options);
         this.selectionConsumer = selectionConsumer;
     }
+
+    private boolean hasPressed = GameSettings.isKeyDown(Minecraft.getMinecraft().gameSettings.keyBindUseItem);
 
     @Override
     public void handleInput() throws IOException {
         super.handleInput();
         if (!shouldPersist()) {
-            mc.displayGuiScreen(null);
-            selectionConsumer.accept(getSelectedSlice());
+            if (closeOnChoice) mc.displayGuiScreen(null);
+            else hasPressed = false;
+            int selected = getSelectedSlice();
+            if (selected != -1) selectionConsumer.accept(selected);
         }
     }
 
     private boolean shouldPersist() {
+        if (!hasPressed) {
+            hasPressed = GameSettings.isKeyDown(mc.gameSettings.keyBindUseItem);
+            return true;
+        }
         return GameSettings.isKeyDown(mc.gameSettings.keyBindUseItem);
     }
 
@@ -53,8 +73,6 @@ public class RadialGuiScreen extends GuiScreen {
     }
 
     private int mouseX, mouseY;
-
-    private static final int ITEM_SIZE = 16;
 
     private static final double HOVERED_RADIUS = 110;
     private static final double UNHOVERED_RADIUS = 100;
@@ -86,14 +104,14 @@ public class RadialGuiScreen extends GuiScreen {
                         Math.PI * 2,
                         HOVERED_RADIUS,
                         HOVERED_COLOR);
-                drawStackCentered(options.get(0), width / 2, height / 2);
+                options.get(0).renderAt(width / 2, height / 2);
                 break;
             default:
                 double sliceAngle = (Math.PI * 2) / optionsSize;
                 double currentAngle = 0;
 
                 for (int i = 0; i < optionsSize; i++) {
-                    ItemStack option = options.get(i);
+                    Option option = options.get(i);
                     drawSlice(option, currentAngle, sliceAngle, selected == i);
                     currentAngle += sliceAngle;
                 }
@@ -101,14 +119,10 @@ public class RadialGuiScreen extends GuiScreen {
         }
 
         int slice = getSelectedSlice();
-        if (optionsSize > slice) {
-            ItemStack stack = options.get(slice);
-            List<String> tooltip = stack.getTooltip(mc.player, mc.gameSettings.advancedItemTooltips ? ADVANCED : NORMAL);
-            drawHoveringText(tooltip, mouseX, mouseY);
-        }
+        if (slice != -1) drawHoveringText(options.get(slice).getTooltip(), mouseX, mouseY);
     }
 
-    private void drawSlice(ItemStack option, double angleMin, double sliceAngle, boolean isHovered) {
+    private void drawSlice(Option option, double angleMin, double sliceAngle, boolean isHovered) {
         float gray = isHovered ? HOVERED_COLOR : UNHOVERED_COLOR;
         double radius = isHovered ? HOVERED_RADIUS : UNHOVERED_RADIUS;
         double midX = width / 2.0 + CENTER_OFFSET * MathHelper.cos((float) (angleMin + sliceAngle / 2));
@@ -117,19 +131,14 @@ public class RadialGuiScreen extends GuiScreen {
 
         double sliceMidX = midX + (radius / 2) * MathHelper.cos((float) (angleMin + sliceAngle / 2));
         double sliceMidY = midY - (radius / 2) * MathHelper.sin((float) (angleMin + sliceAngle / 2));
-        drawStackCentered(option, (int) sliceMidX, (int) sliceMidY);
-    }
-
-    private void drawStackCentered(ItemStack option, int midX, int midY) {
-        itemRender.renderItemIntoGUI(option,
-                midX - ITEM_SIZE / 2,
-                midY - ITEM_SIZE / 2);
+        option.renderAt((int) sliceMidX, (int) sliceMidY);
     }
 
     private void drawArc(double midX, double midY, double angleMin, double angleSize, double radius, float gray) {
         Tessellator tes = Tessellator.getInstance();
         BufferBuilder buf = tes.getBuffer();
         GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
 
         buf.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
         buf.pos(midX, midY, 0).color(gray, gray, gray, gray).endVertex();
@@ -141,6 +150,8 @@ public class RadialGuiScreen extends GuiScreen {
         arcPos(buf, midX, midY, angleMin + angleSize, radius).color(gray, gray, gray, gray).endVertex();
 
         tes.draw();
+
+        GlStateManager.disableBlend();
         GlStateManager.enableTexture2D();
     }
 
@@ -152,6 +163,7 @@ public class RadialGuiScreen extends GuiScreen {
     }
 
     private int getSelectedSlice() {
+        if (options.size() == 0) return -1;
         double dx = mouseX - (width / 2.0);
         double dy = (height / 2.0) - mouseY;
         double angle = (MathHelper.atan2(dy, dx) + Math.PI * 2) % (Math.PI * 2);
