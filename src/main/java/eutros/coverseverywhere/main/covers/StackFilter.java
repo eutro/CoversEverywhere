@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
 
@@ -96,13 +97,20 @@ public class StackFilter implements Predicate<ItemStack>, INBTSerializable<NBTTa
     }
 
     public void addInformation(List<String> tooltip) {
-        tooltip.add(I18n.format("item.covers_everywhere.filter.tooltip.list." + (isWhitelist() ? "white" : "black")));
-        tooltip.add(I18n.format("item.covers_everywhere.filter.tooltip.compare.item." + isCompareItem()));
-        tooltip.add(I18n.format("item.covers_everywhere.filter.tooltip.compare.damage." + isCompareDamage()));
-        tooltip.add(I18n.format("item.covers_everywhere.filter.tooltip.compare.tag." + isCompareTag()));
-        tooltip.add(I18n.format("item.covers_everywhere.filter.tooltip.stacks"));
-        for (ItemStack stack : items) {
-            tooltip.add(" - " + stack.getDisplayName());
+        tooltip.add((isWhitelist() ? TextFormatting.WHITE : TextFormatting.DARK_GRAY) +
+                I18n.format("item.covers_everywhere.filter.tooltip.list." + (isWhitelist() ? "white" : "black")));
+        tooltip.add((isCompareItem() ? TextFormatting.GREEN : TextFormatting.RED) +
+                I18n.format("item.covers_everywhere.filter.tooltip.compare.item." + isCompareItem()));
+        tooltip.add((isCompareDamage() ? TextFormatting.GREEN : TextFormatting.RED) +
+                I18n.format("item.covers_everywhere.filter.tooltip.compare.damage." + isCompareDamage()));
+        tooltip.add((isCompareTag() ? TextFormatting.GREEN : TextFormatting.RED) +
+                I18n.format("item.covers_everywhere.filter.tooltip.compare.tag." + isCompareTag()));
+
+        if (!items.isEmpty()) {
+            tooltip.add(I18n.format("item.covers_everywhere.filter.tooltip.stacks"));
+            for (ItemStack stack : items) {
+                tooltip.add(" - " + stack.getDisplayName());
+            }
         }
     }
 

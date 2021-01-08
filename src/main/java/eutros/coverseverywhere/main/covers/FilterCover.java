@@ -24,7 +24,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -154,7 +153,7 @@ public class FilterCover implements ICover, INBTSerializable<NBTTagCompound> {
             return new ActionResult<>(EnumActionResult.SUCCESS, filterStack);
         }
 
-        public static class FilterPopMessage implements IMessage, IMessageHandler<FilterPopMessage, IMessage> {
+        public static class FilterPopMessage implements IMessage {
             private ItemStack stack;
             private EnumHand hand;
 
@@ -185,20 +184,19 @@ public class FilterCover implements ICover, INBTSerializable<NBTTagCompound> {
             }
 
             @Nullable
-            @Override
-            public IMessage onMessage(FilterPopMessage message, MessageContext ctx) {
+            public IMessage handle(MessageContext ctx) {
                 NetHandlerPlayServer handler = ctx.getServerHandler();
                 EntityPlayerMP player = handler.player;
                 MinecraftServer server = player.getServer();
                 assert server != null;
                 if (!server.isCallingFromMinecraftThread()) {
-                    server.addScheduledTask(() -> onMessage(message, ctx));
+                    server.addScheduledTask(() -> handle(ctx));
                     return null;
                 }
-                ItemStack stack = player.getHeldItem(message.hand);
+                ItemStack stack = player.getHeldItem(hand);
                 NBTTagCompound tag = stack.getTagCompound();
                 StackFilter filter = StackFilter.from(tag);
-                filter.xorStack(message.stack);
+                filter.xorStack(stack);
                 if (tag == null) tag = new NBTTagCompound();
                 tag.merge(filter.serializeNBT());
                 stack.setTagCompound(tag);
@@ -208,7 +206,7 @@ public class FilterCover implements ICover, INBTSerializable<NBTTagCompound> {
 
         @Initialize
         public static void init() {
-            Packets.NETWORK.registerMessage(new FilterPopMessage(), FilterPopMessage.class, Packets.FILTER_DISCRIMINATOR, Side.SERVER);
+            Packets.NETWORK.registerMessage(FilterPopMessage::handle, FilterPopMessage.class, Packets.FILTER_DISCRIMINATOR, Side.SERVER);
         }
     }
 
